@@ -96,6 +96,7 @@ import (
 	skeKubeconfig "github.com/stackitcloud/terraform-provider-stackit/stackit/internal/services/ske/kubeconfig"
 	sqlServerFlexInstance "github.com/stackitcloud/terraform-provider-stackit/stackit/internal/services/sqlserverflex/instance"
 	sqlServerFlexUser "github.com/stackitcloud/terraform-provider-stackit/stackit/internal/services/sqlserverflex/user"
+	sqlServerFlexAlphaInstance "github.com/stackitcloud/terraform-provider-stackit/stackit/internal/services/sqlserverflexalpha/instance"
 )
 
 // Ensure the implementation satisfies the expected interfaces
@@ -623,6 +624,7 @@ func (p *Provider) Resources(_ context.Context) []func() resource.Resource {
 		secretsManagerInstance.NewInstanceResource,
 		secretsManagerUser.NewUserResource,
 		sqlServerFlexInstance.NewInstanceResource,
+		sqlServerFlexAlphaInstance.NewInstanceResource,
 		sqlServerFlexUser.NewUserResource,
 		serverBackupSchedule.NewScheduleResource,
 		serverUpdateSchedule.NewScheduleResource,
