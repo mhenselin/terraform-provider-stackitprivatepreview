@@ -695,6 +695,7 @@ func (p *Provider) Resources(_ context.Context) []func() resource.Resource {
 		secretsManagerUser.NewUserResource,
 		sqlServerFlexInstance.NewInstanceResource,
 		sqlServerFlexUser.NewUserResource,
+		sqlServerFlexAlpaUser.NewUserResource,
 		serverBackupSchedule.NewScheduleResource,
 		serverUpdateSchedule.NewScheduleResource,
 		serviceAccount.NewServiceAccountResource,
