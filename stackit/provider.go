@@ -76,6 +76,7 @@ import (
 	postgresFlexInstance "github.com/stackitcloud/terraform-provider-stackit/stackit/internal/services/postgresflex/instance"
 	postgresFlexUser "github.com/stackitcloud/terraform-provider-stackit/stackit/internal/services/postgresflex/user"
 	postgresFlexAlphaInstance "github.com/stackitcloud/terraform-provider-stackit/stackit/internal/services/postgresflexalpha/instance"
+	postgresFlexAlhpaUser "github.com/stackitcloud/terraform-provider-stackit/stackit/internal/services/postgresflexalpha/user"
 	rabbitMQCredential "github.com/stackitcloud/terraform-provider-stackit/stackit/internal/services/rabbitmq/credential"
 	rabbitMQInstance "github.com/stackitcloud/terraform-provider-stackit/stackit/internal/services/rabbitmq/instance"
 	redisCredential "github.com/stackitcloud/terraform-provider-stackit/stackit/internal/services/redis/credential"
@@ -208,7 +209,10 @@ func (p *Provider) Schema(_ context.Context, _ provider.SchemaRequest, resp *pro
 		"service_enablement_custom_endpoint": "Custom endpoint for the Service Enablement API",
 		"token_custom_endpoint":              "Custom endpoint for the token API, which is used to request access tokens when using the key flow",
 		"enable_beta_resources":              "Enable beta resources. Default is false.",
-		"experiments":                        fmt.Sprintf("Enables experiments. These are unstable features without official support. More information can be found in the README. Available Experiments: %v", strings.Join(features.AvailableExperiments, ", ")),
+		"experiments": fmt.Sprintf(
+			"Enables experiments. These are unstable features without official support. More information can be found in the README. Available Experiments: %v",
+			strings.Join(features.AvailableExperiments, ", "),
+		),
 	}
 
 	resp.Schema = schema.Schema{
@@ -408,7 +412,12 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 		if !v.IsUnknown() && !v.IsNull() {
 			val, err := v.ToBoolValue(ctx)
 			if err != nil {
-				core.LogAndAddError(ctx, &resp.Diagnostics, "Error configuring provider", fmt.Sprintf("Setting up bool value: %v", diags.Errors()))
+				core.LogAndAddError(
+					ctx,
+					&resp.Diagnostics,
+					"Error configuring provider",
+					fmt.Sprintf("Setting up bool value: %v", diags.Errors()),
+				)
 			}
 			setter(val.ValueBool())
 		}
@@ -424,48 +433,106 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 	setStringField(providerConfig.TokenCustomEndpoint, func(v string) { sdkConfig.TokenCustomUrl = v })
 
 	setStringField(providerConfig.DefaultRegion, func(v string) { providerData.DefaultRegion = v })
-	setStringField(providerConfig.Region, func(v string) { providerData.Region = v }) // nolint:staticcheck // preliminary handling of deprecated attribute
+	setStringField(
+		providerConfig.Region,
+		func(v string) { providerData.Region = v },
+	) // nolint:staticcheck // preliminary handling of deprecated attribute
 	setBoolField(providerConfig.EnableBetaResources, func(v bool) { providerData.EnableBetaResources = v })
 
-	setStringField(providerConfig.AuthorizationCustomEndpoint, func(v string) { providerData.AuthorizationCustomEndpoint = v })
+	setStringField(
+		providerConfig.AuthorizationCustomEndpoint,
+		func(v string) { providerData.AuthorizationCustomEndpoint = v },
+	)
 	setStringField(providerConfig.CdnCustomEndpoint, func(v string) { providerData.CdnCustomEndpoint = v })
 	setStringField(providerConfig.DnsCustomEndpoint, func(v string) { providerData.DnsCustomEndpoint = v })
 	setStringField(providerConfig.GitCustomEndpoint, func(v string) { providerData.GitCustomEndpoint = v })
 	setStringField(providerConfig.IaaSCustomEndpoint, func(v string) { providerData.IaaSCustomEndpoint = v })
 	setStringField(providerConfig.KmsCustomEndpoint, func(v string) { providerData.KMSCustomEndpoint = v })
-	setStringField(providerConfig.LoadBalancerCustomEndpoint, func(v string) { providerData.LoadBalancerCustomEndpoint = v })
+	setStringField(
+		providerConfig.LoadBalancerCustomEndpoint,
+		func(v string) { providerData.LoadBalancerCustomEndpoint = v },
+	)
 	setStringField(providerConfig.LogMeCustomEndpoint, func(v string) { providerData.LogMeCustomEndpoint = v })
 	setStringField(providerConfig.MariaDBCustomEndpoint, func(v string) { providerData.MariaDBCustomEndpoint = v })
-	setStringField(providerConfig.ModelServingCustomEndpoint, func(v string) { providerData.ModelServingCustomEndpoint = v })
-	setStringField(providerConfig.MongoDBFlexCustomEndpoint, func(v string) { providerData.MongoDBFlexCustomEndpoint = v })
-	setStringField(providerConfig.ObjectStorageCustomEndpoint, func(v string) { providerData.ObjectStorageCustomEndpoint = v })
-	setStringField(providerConfig.ObservabilityCustomEndpoint, func(v string) { providerData.ObservabilityCustomEndpoint = v })
-	setStringField(providerConfig.OpenSearchCustomEndpoint, func(v string) { providerData.OpenSearchCustomEndpoint = v })
-	setStringField(providerConfig.PostgresFlexCustomEndpoint, func(v string) { providerData.PostgresFlexCustomEndpoint = v })
+	setStringField(
+		providerConfig.ModelServingCustomEndpoint,
+		func(v string) { providerData.ModelServingCustomEndpoint = v },
+	)
+	setStringField(
+		providerConfig.MongoDBFlexCustomEndpoint,
+		func(v string) { providerData.MongoDBFlexCustomEndpoint = v },
+	)
+	setStringField(
+		providerConfig.ObjectStorageCustomEndpoint,
+		func(v string) { providerData.ObjectStorageCustomEndpoint = v },
+	)
+	setStringField(
+		providerConfig.ObservabilityCustomEndpoint,
+		func(v string) { providerData.ObservabilityCustomEndpoint = v },
+	)
+	setStringField(
+		providerConfig.OpenSearchCustomEndpoint,
+		func(v string) { providerData.OpenSearchCustomEndpoint = v },
+	)
+	setStringField(
+		providerConfig.PostgresFlexCustomEndpoint,
+		func(v string) { providerData.PostgresFlexCustomEndpoint = v },
+	)
 	setStringField(providerConfig.RabbitMQCustomEndpoint, func(v string) { providerData.RabbitMQCustomEndpoint = v })
 	setStringField(providerConfig.RedisCustomEndpoint, func(v string) { providerData.RedisCustomEndpoint = v })
-	setStringField(providerConfig.ResourceManagerCustomEndpoint, func(v string) { providerData.ResourceManagerCustomEndpoint = v })
+	setStringField(
+		providerConfig.ResourceManagerCustomEndpoint,
+		func(v string) { providerData.ResourceManagerCustomEndpoint = v },
+	)
 	setStringField(providerConfig.ScfCustomEndpoint, func(v string) { providerData.ScfCustomEndpoint = v })
-	setStringField(providerConfig.SecretsManagerCustomEndpoint, func(v string) { providerData.SecretsManagerCustomEndpoint = v })
-	setStringField(providerConfig.ServerBackupCustomEndpoint, func(v string) { providerData.ServerBackupCustomEndpoint = v })
-	setStringField(providerConfig.ServerUpdateCustomEndpoint, func(v string) { providerData.ServerUpdateCustomEndpoint = v })
-	setStringField(providerConfig.ServiceAccountCustomEndpoint, func(v string) { providerData.ServiceAccountCustomEndpoint = v })
-	setStringField(providerConfig.ServiceEnablementCustomEndpoint, func(v string) { providerData.ServiceEnablementCustomEndpoint = v })
+	setStringField(
+		providerConfig.SecretsManagerCustomEndpoint,
+		func(v string) { providerData.SecretsManagerCustomEndpoint = v },
+	)
+	setStringField(
+		providerConfig.ServerBackupCustomEndpoint,
+		func(v string) { providerData.ServerBackupCustomEndpoint = v },
+	)
+	setStringField(
+		providerConfig.ServerUpdateCustomEndpoint,
+		func(v string) { providerData.ServerUpdateCustomEndpoint = v },
+	)
+	setStringField(
+		providerConfig.ServiceAccountCustomEndpoint,
+		func(v string) { providerData.ServiceAccountCustomEndpoint = v },
+	)
+	setStringField(
+		providerConfig.ServiceEnablementCustomEndpoint,
+		func(v string) { providerData.ServiceEnablementCustomEndpoint = v },
+	)
 	setStringField(providerConfig.SkeCustomEndpoint, func(v string) { providerData.SKECustomEndpoint = v })
-	setStringField(providerConfig.SqlServerFlexCustomEndpoint, func(v string) { providerData.SQLServerFlexCustomEndpoint = v })
+	setStringField(
+		providerConfig.SqlServerFlexCustomEndpoint,
+		func(v string) { providerData.SQLServerFlexCustomEndpoint = v },
+	)
 
 	if !(providerConfig.Experiments.IsUnknown() || providerConfig.Experiments.IsNull()) {
 		var experimentValues []string
 		diags := providerConfig.Experiments.ElementsAs(ctx, &experimentValues, false)
 		if diags.HasError() {
-			core.LogAndAddError(ctx, &resp.Diagnostics, "Error configuring provider", fmt.Sprintf("Setting up experiments: %v", diags.Errors()))
+			core.LogAndAddError(
+				ctx,
+				&resp.Diagnostics,
+				"Error configuring provider",
+				fmt.Sprintf("Setting up experiments: %v", diags.Errors()),
+			)
 		}
 		providerData.Experiments = experimentValues
 	}
 
 	roundTripper, err := sdkauth.SetupAuth(sdkConfig)
 	if err != nil {
-		core.LogAndAddError(ctx, &resp.Diagnostics, "Error configuring provider", fmt.Sprintf("Setting up authentication: %v", err))
+		core.LogAndAddError(
+			ctx,
+			&resp.Diagnostics,
+			"Error configuring provider",
+			fmt.Sprintf("Setting up authentication: %v", err),
+		)
 		return
 	}
 
@@ -479,7 +546,10 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 	var ephemeralProviderData core.EphemeralProviderData
 	ephemeralProviderData.ProviderData = providerData
 	setStringField(providerConfig.ServiceAccountKey, func(v string) { ephemeralProviderData.ServiceAccountKey = v })
-	setStringField(providerConfig.ServiceAccountKeyPath, func(v string) { ephemeralProviderData.ServiceAccountKeyPath = v })
+	setStringField(
+		providerConfig.ServiceAccountKeyPath,
+		func(v string) { ephemeralProviderData.ServiceAccountKeyPath = v },
+	)
 	setStringField(providerConfig.PrivateKey, func(v string) { ephemeralProviderData.PrivateKey = v })
 	setStringField(providerConfig.PrivateKeyPath, func(v string) { ephemeralProviderData.PrivateKeyPath = v })
 	setStringField(providerConfig.TokenCustomEndpoint, func(v string) { ephemeralProviderData.TokenCustomEndpoint = v })
@@ -538,6 +608,7 @@ func (p *Provider) DataSources(_ context.Context) []func() datasource.DataSource
 		postgresFlexDatabase.NewDatabaseDataSource,
 		postgresFlexInstance.NewInstanceDataSource,
 		postgresFlexUser.NewUserDataSource,
+		postgresFlexAlhpaUser.NewUserDataSource,
 		rabbitMQInstance.NewInstanceDataSource,
 		rabbitMQCredential.NewCredentialDataSource,
 		redisInstance.NewInstanceDataSource,
