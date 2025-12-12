@@ -96,6 +96,7 @@ import (
 	skeKubeconfig "github.com/stackitcloud/terraform-provider-stackit/stackit/internal/services/ske/kubeconfig"
 	sqlServerFlexInstance "github.com/stackitcloud/terraform-provider-stackit/stackit/internal/services/sqlserverflex/instance"
 	sqlServerFlexUser "github.com/stackitcloud/terraform-provider-stackit/stackit/internal/services/sqlserverflex/user"
+	sqlServerFlexAlphaInstance "github.com/stackitcloud/terraform-provider-stackit/stackit/internal/services/sqlserverflexalpha/instance"
 )
 
 // Ensure the implementation satisfies the expected interfaces
@@ -489,6 +490,75 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 
 // DataSources defines the data sources implemented in the provider.
 func (p *Provider) DataSources(_ context.Context) []func() datasource.DataSource {
+	return []func() datasource.DataSource{
+		alertGroup.NewAlertGroupDataSource,
+		cdn.NewDistributionDataSource,
+		cdnCustomDomain.NewCustomDomainDataSource,
+		dnsZone.NewZoneDataSource,
+		dnsRecordSet.NewRecordSetDataSource,
+		gitInstance.NewGitDataSource,
+		iaasAffinityGroup.NewAffinityGroupDatasource,
+		iaasImage.NewImageDataSource,
+		iaasImageV2.NewImageV2DataSource,
+		iaasNetwork.NewNetworkDataSource,
+		iaasNetworkArea.NewNetworkAreaDataSource,
+		iaasNetworkAreaRoute.NewNetworkAreaRouteDataSource,
+		iaasNetworkInterface.NewNetworkInterfaceDataSource,
+		iaasVolume.NewVolumeDataSource,
+		iaasProject.NewProjectDataSource,
+		iaasPublicIp.NewPublicIpDataSource,
+		iaasPublicIpRanges.NewPublicIpRangesDataSource,
+		iaasKeyPair.NewKeyPairDataSource,
+		iaasServer.NewServerDataSource,
+		iaasSecurityGroup.NewSecurityGroupDataSource,
+		iaasalphaRoutingTable.NewRoutingTableDataSource,
+		iaasalphaRoutingTableRoute.NewRoutingTableRouteDataSource,
+		iaasalphaRoutingTables.NewRoutingTablesDataSource,
+		iaasalphaRoutingTableRoutes.NewRoutingTableRoutesDataSource,
+		iaasSecurityGroupRule.NewSecurityGroupRuleDataSource,
+		kmsKey.NewKeyDataSource,
+		kmsKeyRing.NewKeyRingDataSource,
+		kmsWrappingKey.NewWrappingKeyDataSource,
+		loadBalancer.NewLoadBalancerDataSource,
+		logMeInstance.NewInstanceDataSource,
+		logMeCredential.NewCredentialDataSource,
+		logAlertGroup.NewLogAlertGroupDataSource,
+		machineType.NewMachineTypeDataSource,
+		mariaDBInstance.NewInstanceDataSource,
+		mariaDBCredential.NewCredentialDataSource,
+		mongoDBFlexInstance.NewInstanceDataSource,
+		mongoDBFlexUser.NewUserDataSource,
+		objectStorageBucket.NewBucketDataSource,
+		objecStorageCredentialsGroup.NewCredentialsGroupDataSource,
+		objecStorageCredential.NewCredentialDataSource,
+		observabilityInstance.NewInstanceDataSource,
+		observabilityScrapeConfig.NewScrapeConfigDataSource,
+		openSearchInstance.NewInstanceDataSource,
+		openSearchCredential.NewCredentialDataSource,
+		postgresFlexDatabase.NewDatabaseDataSource,
+		postgresFlexInstance.NewInstanceDataSource,
+		postgresFlexUser.NewUserDataSource,
+		rabbitMQInstance.NewInstanceDataSource,
+		rabbitMQCredential.NewCredentialDataSource,
+		redisInstance.NewInstanceDataSource,
+		redisCredential.NewCredentialDataSource,
+		resourceManagerProject.NewProjectDataSource,
+		scfOrganization.NewScfOrganizationDataSource,
+		scfOrganizationmanager.NewScfOrganizationManagerDataSource,
+		scfPlatform.NewScfPlatformDataSource,
+		resourceManagerFolder.NewFolderDataSource,
+		secretsManagerInstance.NewInstanceDataSource,
+		secretsManagerUser.NewUserDataSource,
+		sqlServerFlexInstance.NewInstanceDataSource,
+		sqlServerFlexAlphaInstance.NewInstanceDataSource,
+		sqlServerFlexUser.NewUserDataSource,
+		serverBackupSchedule.NewScheduleDataSource,
+		serverBackupSchedule.NewSchedulesDataSource,
+		serverUpdateSchedule.NewScheduleDataSource,
+		serverUpdateSchedule.NewSchedulesDataSource,
+		serviceAccount.NewServiceAccountDataSource,
+		skeCluster.NewClusterDataSource,
+	}
 	return []func() datasource.DataSource{}
 }
 

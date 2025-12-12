@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/stackitcloud/stackit-sdk-go/services/sqlserverflex"
+	sqlserverflex "github.com/stackitcloud/terraform-provider-stackit/pkg/sqlserverflexalpha"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/stackitcloud/stackit-sdk-go/core/config"
