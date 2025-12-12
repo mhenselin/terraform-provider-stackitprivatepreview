@@ -33,7 +33,6 @@ func TestMapFields(t *testing.T) {
 		input       *sqlserverflex.GetInstanceResponse
 		flavor      *flavorModel
 		storage     *storageModel
-		options     *optionsModel
 		region      string
 		expected    Model
 		isValid     bool
@@ -49,14 +48,13 @@ func TestMapFields(t *testing.T) {
 			},
 			&flavorModel{},
 			&storageModel{},
-			&optionsModel{},
 			testRegion,
 			Model{
-				Id:             types.StringValue("pid,region,iid"),
-				InstanceId:     types.StringValue("iid"),
-				ProjectId:      types.StringValue("pid"),
-				Name:           types.StringNull(),
-				ACL:            types.ListNull(types.StringType),
+				Id:         types.StringValue("pid,region,iid"),
+				InstanceId: types.StringValue("iid"),
+				ProjectId:  types.StringValue("pid"),
+				Name:       types.StringNull(),
+				//ACL:            types.ListNull(types.StringType),
 				BackupSchedule: types.StringNull(),
 				Flavor: types.ObjectValueMust(flavorTypes, map[string]attr.Value{
 					"id":          types.StringNull(),
@@ -69,10 +67,10 @@ func TestMapFields(t *testing.T) {
 					"class": types.StringNull(),
 					"size":  types.Int64Null(),
 				}),
-				Options: types.ObjectValueMust(optionsTypes, map[string]attr.Value{
-					"edition":        types.StringNull(),
-					"retention_days": types.Int64Null(),
-				}),
+				//Options: types.ObjectValueMust(optionsTypes, map[string]attr.Value{
+				//	"edition":        types.StringNull(),
+				//	"retention_days": types.Int64Null(),
+				//}),
 				Version: types.StringNull(),
 				Region:  types.StringValue(testRegion),
 			},
@@ -130,7 +128,7 @@ func TestMapFields(t *testing.T) {
 					types.StringValue(""),
 				}),
 				BackupSchedule: types.StringValue("schedule"),
-				Flavor: types.ObjectValueMust(flavorTypes, map[string]attr.Value{
+				FlavorId: types.ObjectValueMust(flavorTypes, map[string]attr.Value{
 					"id":          types.StringValue("flavor_id"),
 					"description": types.StringValue("description"),
 					"cpu":         types.Int64Value(12),
@@ -203,7 +201,7 @@ func TestMapFields(t *testing.T) {
 					types.StringValue(""),
 				}),
 				BackupSchedule: types.StringValue("schedule"),
-				Flavor: types.ObjectValueMust(flavorTypes, map[string]attr.Value{
+				FlavorId: types.ObjectValueMust(flavorTypes, map[string]attr.Value{
 					"id":          types.StringNull(),
 					"description": types.StringNull(),
 					"cpu":         types.Int64Value(12),
@@ -278,7 +276,7 @@ func TestMapFields(t *testing.T) {
 					types.StringValue("ip1"),
 				}),
 				BackupSchedule: types.StringValue("schedule"),
-				Flavor: types.ObjectValueMust(flavorTypes, map[string]attr.Value{
+				FlavorId: types.ObjectValueMust(flavorTypes, map[string]attr.Value{
 					"id":          types.StringNull(),
 					"description": types.StringNull(),
 					"cpu":         types.Int64Value(12),

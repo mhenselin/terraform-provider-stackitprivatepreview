@@ -448,7 +448,7 @@ func TestMapOptions(t *testing.T) {
 				t.Fatalf("Should not have failed: %v", err)
 			}
 			if tt.isValid {
-				diff := cmp.Diff(tt.model, tt.expected, cmpopts.IgnoreFields(Model{}, "ACL", "Flavor", "Replicas", "Storage", "Version"))
+				diff := cmp.Diff(tt.model, tt.expected, cmpopts.IgnoreFields(Model{}, "ACL", "FlavorId", "Replicas", "Storage", "Version"))
 				if diff != "" {
 					t.Fatalf("Data does not match: %s", diff)
 				}

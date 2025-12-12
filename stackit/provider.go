@@ -551,6 +551,7 @@ func (p *Provider) DataSources(_ context.Context) []func() datasource.DataSource
 		secretsManagerInstance.NewInstanceDataSource,
 		secretsManagerUser.NewUserDataSource,
 		sqlServerFlexInstance.NewInstanceDataSource,
+		sqlServerFlexAlphaInstance.NewInstanceDataSource,
 		sqlServerFlexUser.NewUserDataSource,
 		serverBackupSchedule.NewScheduleDataSource,
 		serverBackupSchedule.NewSchedulesDataSource,

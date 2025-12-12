@@ -167,7 +167,7 @@ func TestToCreatePayload(t *testing.T) {
 			expectError: false,
 		},
 		{
-			description: "simple values with ACL and Flavor",
+			description: "simple values with ACL and FlavorId",
 			input: &Model{
 				Name:   types.StringValue("my-instance"),
 				Flavor: types.StringValue("git-100"),
