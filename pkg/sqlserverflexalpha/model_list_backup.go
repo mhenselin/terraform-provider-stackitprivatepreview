@@ -57,7 +57,7 @@ func setListBackupGetCompletionTimeAttributeType(arg *ListBackupGetCompletionTim
 	types and functions for id
 */
 
-//// isAny
+// isAny
 //type ListBackupGetIdAttributeType = any
 //type ListBackupGetIdArgType = any
 //type ListBackupGetIdRetType = any

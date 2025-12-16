@@ -14,7 +14,7 @@ import (
 )
 
 type sqlserverflexClient interface {
-	GetFlavorsRequestExecute(ctx context.Context, projectId, region string) (*sqlserverflex.GetFlavorsResponse, error)
+	GetFlavorsRequestExecute(ctx context.Context, projectId, region string, page, size *int64, sort sqlserverflex.FlavorSort) (*sqlserverflex.GetFlavorsResponse, error)
 }
 
 func mapFields(ctx context.Context, resp *sqlserverflex.GetInstanceResponse, model *Model, flavor *flavorModel, storage *storageModel, encryption *encryptionModel, network *networkModel, region string) error {
@@ -48,6 +48,7 @@ func mapFields(ctx context.Context, resp *sqlserverflex.GetInstanceResponse, mod
 		"description": flavor.Description,
 		"cpu":         flavor.CPU,
 		"ram":         flavor.RAM,
+		"nodeType":    flavor.NodeType,
 	}
 	flavorObject, diags := types.ObjectValue(flavorTypes, flavorValues)
 	if diags.HasError() {
@@ -200,7 +201,7 @@ func toCreatePayload(model *Model, storage *storageModel, encryption *encryption
 	}, nil
 }
 
-func toUpdatePayload(model *Model) (*sqlserverflex.UpdateInstancePartiallyRequestPayload, error) {
+func toUpdatePayload(model *Model, storage *storageModel, network *networkModel) (*sqlserverflex.UpdateInstancePartiallyRequestPayload, error) {
 	if model == nil {
 		return nil, fmt.Errorf("nil model")
 	}
@@ -218,16 +219,62 @@ func toUpdatePayload(model *Model) (*sqlserverflex.UpdateInstancePartiallyReques
 		flavorId = modelValues["id"].String()
 	}
 
-	// TODO - add missing parts
+	storagePayload := &sqlserverflex.UpdateInstanceRequestPayloadGetStorageArgType{}
+	if storage != nil {
+		storagePayload.Size = conversion.Int64ValueToPointer(storage.Size)
+	}
+
+	var aclElements []string
+	if network != nil && !(network.ACL.IsNull() || network.ACL.IsUnknown()) {
+		aclElements = make([]string, 0, len(network.ACL.Elements()))
+		diags := network.ACL.ElementsAs(nil, &aclElements, false)
+		if diags.HasError() {
+			return nil, fmt.Errorf("creating network: %w", core.DiagsToError(diags))
+		}
+	}
+
+	// TODO - implement network.ACL as soon as it becomes available
+	replCount := int32(model.Replicas.ValueInt64())
 	return &sqlserverflex.UpdateInstancePartiallyRequestPayload{
+		Acl:            &aclElements,
 		BackupSchedule: conversion.StringValueToPointer(model.BackupSchedule),
 		FlavorId:       &flavorId,
 		Name:           conversion.StringValueToPointer(model.Name),
+		Replicas:       sqlserverflex.UpdateInstancePartiallyRequestPayloadGetReplicasAttributeType(&replCount),
+		RetentionDays:  conversion.Int64ValueToPointer(model.RetentionDays),
+		Storage:        storagePayload,
 		Version:        sqlserverflex.UpdateInstancePartiallyRequestPayloadGetVersionAttributeType(conversion.StringValueToPointer(model.Version)),
 	}, nil
 }
 
-func loadFlavorId(ctx context.Context, client sqlserverflexClient, model *Model, flavor *flavorModel) error {
+func getAllFlavors(ctx context.Context, client sqlserverflexClient, projectId, region string) ([]sqlserverflex.ListFlavors, error) {
+	if projectId == "" || region == "" {
+		return nil, fmt.Errorf("listing sqlserverflex flavors: projectId and region are required")
+	}
+	var flavorList []sqlserverflex.ListFlavors
+
+	page := int64(1)
+	size := int64(10)
+	for {
+		res, err := client.GetFlavorsRequestExecute(ctx, projectId, region, &page, &size, sqlserverflex.FLAVORSORT_INDEX_ASC)
+		if err != nil {
+			return nil, fmt.Errorf("listing sqlserverflex flavors: %w", err)
+		}
+		if res.Flavors == nil {
+			return nil, fmt.Errorf("finding flavors for project %s", projectId)
+		}
+		pagination := res.GetPagination()
+		flavorList = append(flavorList, *res.Flavors...)
+
+		if *pagination.TotalRows == int64(len(flavorList)) {
+			break
+		}
+		page++
+	}
+	return flavorList, nil
+}
+
+func loadFlavorId(ctx context.Context, client sqlserverflexClient, model *Model, flavor *flavorModel, storage *storageModel) error {
 	if model == nil {
 		return fmt.Errorf("nil model")
 	}
@@ -242,28 +289,61 @@ func loadFlavorId(ctx context.Context, client sqlserverflexClient, model *Model,
 	if ram == nil {
 		return fmt.Errorf("nil RAM")
 	}
+	nodeType := conversion.StringValueToPointer(flavor.NodeType)
+	if nodeType == nil {
+		return fmt.Errorf("nil NodeType")
+	}
+	storageClass := conversion.StringValueToPointer(storage.Class)
+	if storageClass == nil {
+		return fmt.Errorf("nil StorageClass")
+	}
+	storageSize := conversion.Int64ValueToPointer(storage.Size)
+	if storageSize == nil {
+		return fmt.Errorf("nil StorageSize")
+	}
 
 	projectId := model.ProjectId.ValueString()
 	region := model.Region.ValueString()
-	res, err := client.GetFlavorsRequestExecute(ctx, projectId, region)
+
+	flavorList, err := getAllFlavors(ctx, client, projectId, region)
 	if err != nil {
-		return fmt.Errorf("listing sqlserverflex flavors: %w", err)
+		return err
 	}
 
 	avl := ""
-	if res.Flavors == nil {
-		return fmt.Errorf("finding flavors for project %s", projectId)
-	}
-	for _, f := range *res.Flavors {
+	foundFlavorCount := 0
+	for _, f := range flavorList {
 		if f.Id == nil || f.Cpu == nil || f.Memory == nil {
 			continue
 		}
+		if strings.ToLower(*f.NodeType) != strings.ToLower(*nodeType) {
+			continue
+		}
 		if *f.Cpu == *cpu && *f.Memory == *ram {
+			var useSc *sqlserverflex.FlavorStorageClassesStorageClass
+			for _, sc := range *f.StorageClasses {
+				if *sc.Class != *storageClass {
+					continue
+				}
+				if *storageSize < *f.MinGB || *storageSize > *f.MaxGB {
+					return fmt.Errorf("storage size %d out of bounds (min: %d - max: %d)", *storageSize, *f.MinGB, *f.MaxGB)
+				}
+				useSc = &sc
+			}
+			if useSc == nil {
+				return fmt.Errorf("no storage class found for %s", *storageClass)
+			}
+
 			flavor.Id = types.StringValue(*f.Id)
 			flavor.Description = types.StringValue(*f.Description)
-			break
+			foundFlavorCount++
 		}
-		avl = fmt.Sprintf("%s\n- %d CPU, %d GB RAM", avl, *f.Cpu, *f.Memory)
+		for _, cls := range *f.StorageClasses {
+			avl = fmt.Sprintf("%s\n- %d CPU, %d GB RAM, storage %s (min: %d - max: %d)", avl, *f.Cpu, *f.Memory, *cls.Class, *f.MinGB, *f.MaxGB)
+		}
+	}
+	if foundFlavorCount > 1 {
+		return fmt.Errorf("multiple flavors found: %d flavors", foundFlavorCount)
 	}
 	if flavor.Id.ValueString() == "" {
 		return fmt.Errorf("couldn't find flavor, available specs are:%s", avl)
@@ -288,16 +368,14 @@ func getFlavorModelById(ctx context.Context, client sqlserverflexClient, model *
 
 	projectId := model.ProjectId.ValueString()
 	region := model.Region.ValueString()
-	res, err := client.GetFlavorsRequestExecute(ctx, projectId, region)
+
+	flavorList, err := getAllFlavors(ctx, client, projectId, region)
 	if err != nil {
-		return fmt.Errorf("listing sqlserverflexalpha flavors: %w", err)
+		return err
 	}
 
 	avl := ""
-	if res.Flavors == nil {
-		return fmt.Errorf("finding flavors for project %s", projectId)
-	}
-	for _, f := range *res.Flavors {
+	for _, f := range flavorList {
 		if f.Id == nil || f.Cpu == nil || f.Memory == nil {
 			continue
 		}
@@ -306,6 +384,7 @@ func getFlavorModelById(ctx context.Context, client sqlserverflexClient, model *
 			flavor.Description = types.StringValue(*f.Description)
 			flavor.CPU = types.Int64Value(*f.Cpu)
 			flavor.RAM = types.Int64Value(*f.Memory)
+			flavor.NodeType = types.StringValue(*f.NodeType)
 			break
 		}
 		avl = fmt.Sprintf("%s\n- %d CPU, %d GB RAM", avl, *f.Cpu, *f.Memory)
