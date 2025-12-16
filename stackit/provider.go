@@ -683,6 +683,7 @@ func (p *Provider) Resources(_ context.Context) []func() resource.Resource {
 		postgresFlexInstance.NewInstanceResource,
 		postgresFlexAlphaInstance.NewInstanceResource,
 		postgresFlexUser.NewUserResource,
+		postgresFlexAlhpaUser.NewUserResource,
 		rabbitMQInstance.NewInstanceResource,
 		rabbitMQCredential.NewCredentialResource,
 		redisInstance.NewInstanceResource,
