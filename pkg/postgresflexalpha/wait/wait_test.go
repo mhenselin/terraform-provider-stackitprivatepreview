@@ -2,13 +2,13 @@ package wait
 
 import (
 	"context"
+	"math"
 	"testing"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stackitcloud/stackit-sdk-go/core/oapierror"
-	"github.com/stackitcloud/stackit-sdk-go/core/utils"
-	"github.com/stackitcloud/stackit-sdk-go/services/postgresflex"
+	"github.com/stackitcloud/terraform-provider-stackit/pkg/postgresflexalpha"
 )
 
 // Used for testing instance operations
@@ -20,7 +20,12 @@ type apiClientInstanceMocked struct {
 	usersGetErrorStatus    int
 }
 
-func (a *apiClientInstanceMocked) GetInstanceExecute(_ context.Context, _, _, _ string) (*postgresflex.InstanceResponse, error) {
+var _ APIClientInstanceInterface = &apiClientInstanceMocked{}
+
+func (a *apiClientInstanceMocked) GetInstanceRequestExecute(
+	_ context.Context,
+	_, _, _ string,
+) (*postgresflexalpha.GetInstanceResponse, error) {
 	if a.instanceGetFails {
 		return nil, &oapierror.GenericOpenAPIError{
 			StatusCode: 500,
@@ -33,15 +38,16 @@ func (a *apiClientInstanceMocked) GetInstanceExecute(_ context.Context, _, _, _ 
 		}
 	}
 
-	return &postgresflex.InstanceResponse{
-		Item: &postgresflex.Instance{
-			Id:     &a.instanceId,
-			Status: &a.instanceState,
-		},
+	return &postgresflexalpha.GetInstanceResponse{
+		Id:     &a.instanceId,
+		Status: postgresflexalpha.GetInstanceResponseGetStatusAttributeType(&a.instanceState),
 	}, nil
 }
 
-func (a *apiClientInstanceMocked) ListUsersExecute(_ context.Context, _, _, _ string) (*postgresflex.ListUsersResponse, error) {
+func (a *apiClientInstanceMocked) ListUsersRequestExecute(
+	_ context.Context,
+	_, _, _ string,
+) (*postgresflexalpha.ListUserResponse, error) {
 	if a.usersGetErrorStatus != 0 {
 		return nil, &oapierror.GenericOpenAPIError{
 			StatusCode: a.usersGetErrorStatus,
@@ -49,20 +55,33 @@ func (a *apiClientInstanceMocked) ListUsersExecute(_ context.Context, _, _, _ st
 	}
 
 	aux := int64(0)
-	return &postgresflex.ListUsersResponse{
-		Count: &aux,
-		Items: &[]postgresflex.ListUsersResponseItem{},
+	size := int64(math.MaxInt64)
+	pages := int64(math.MaxInt64)
+
+	pagination := postgresflexalpha.Pagination{
+		Page:       &aux,
+		Size:       &size,
+		Sort:       nil,
+		TotalPages: &pages,
+		TotalRows:  &pages,
+	}
+	return &postgresflexalpha.ListUserResponse{
+		Pagination: &pagination,
+		Users:      &[]postgresflexalpha.ListUser{},
 	}, nil
 }
 
 // Used for testing user operations
 type apiClientUserMocked struct {
 	getFails      bool
-	userId        string
+	userId        int64
 	isUserDeleted bool
 }
 
-func (a *apiClientUserMocked) GetUserExecute(_ context.Context, _, _, _, _ string) (*postgresflex.GetUserResponse, error) {
+func (a *apiClientUserMocked) GetUserRequestExecute(_ context.Context, _, _, _ string, _ int64) (
+	*postgresflexalpha.GetUserResponse,
+	error,
+) {
 	if a.getFails {
 		return nil, &oapierror.GenericOpenAPIError{
 			StatusCode: 500,
@@ -75,10 +94,8 @@ func (a *apiClientUserMocked) GetUserExecute(_ context.Context, _, _, _, _ strin
 		}
 	}
 
-	return &postgresflex.GetUserResponse{
-		Item: &postgresflex.UserResponse{
-			Id: &a.userId,
-		},
+	return &postgresflexalpha.GetUserResponse{
+		Id: &a.userId,
 	}, nil
 }
 
@@ -143,37 +160,37 @@ func TestCreateInstanceWaitHandler(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.desc, func(t *testing.T) {
-			instanceId := "foo-bar"
+		t.Run(
+			tt.desc, func(t *testing.T) {
+				instanceId := "foo-bar"
 
-			apiClient := &apiClientInstanceMocked{
-				instanceId:          instanceId,
-				instanceState:       tt.instanceState,
-				instanceGetFails:    tt.instanceGetFails,
-				usersGetErrorStatus: tt.usersGetErrorStatus,
-			}
-
-			var wantRes *postgresflex.InstanceResponse
-			if tt.wantResp {
-				wantRes = &postgresflex.InstanceResponse{
-					Item: &postgresflex.Instance{
-						Id:     &instanceId,
-						Status: utils.Ptr(tt.instanceState),
-					},
+				apiClient := &apiClientInstanceMocked{
+					instanceId:          instanceId,
+					instanceState:       tt.instanceState,
+					instanceGetFails:    tt.instanceGetFails,
+					usersGetErrorStatus: tt.usersGetErrorStatus,
 				}
-			}
 
-			handler := CreateInstanceWaitHandler(context.Background(), apiClient, "", "", instanceId)
+				var wantRes *postgresflexalpha.GetInstanceResponse
+				if tt.wantResp {
+					wantRes = &postgresflexalpha.GetInstanceResponse{
+						Id:     &instanceId,
+						Status: postgresflexalpha.GetInstanceResponseGetStatusAttributeType(&tt.instanceState),
+					}
+				}
 
-			gotRes, err := handler.SetTimeout(10 * time.Millisecond).SetSleepBeforeWait(1 * time.Millisecond).WaitWithContext(context.Background())
+				handler := CreateInstanceWaitHandler(context.Background(), apiClient, "", "", instanceId)
 
-			if (err != nil) != tt.wantErr {
-				t.Fatalf("handler error = %v, wantErr %v", err, tt.wantErr)
-			}
-			if !cmp.Equal(gotRes, wantRes) {
-				t.Fatalf("handler gotRes = %v, want %v", gotRes, wantRes)
-			}
-		})
+				gotRes, err := handler.SetTimeout(10 * time.Millisecond).SetSleepBeforeWait(1 * time.Millisecond).WaitWithContext(context.Background())
+
+				if (err != nil) != tt.wantErr {
+					t.Fatalf("handler error = %v, wantErr %v", err, tt.wantErr)
+				}
+				if !cmp.Equal(gotRes, wantRes) {
+					t.Fatalf("handler gotRes = %v, want %v", gotRes, wantRes)
+				}
+			},
+		)
 	}
 }
 
@@ -221,36 +238,36 @@ func TestUpdateInstanceWaitHandler(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.desc, func(t *testing.T) {
-			instanceId := "foo-bar"
+		t.Run(
+			tt.desc, func(t *testing.T) {
+				instanceId := "foo-bar"
 
-			apiClient := &apiClientInstanceMocked{
-				instanceId:       instanceId,
-				instanceState:    tt.instanceState,
-				instanceGetFails: tt.instanceGetFails,
-			}
-
-			var wantRes *postgresflex.InstanceResponse
-			if tt.wantResp {
-				wantRes = &postgresflex.InstanceResponse{
-					Item: &postgresflex.Instance{
-						Id:     &instanceId,
-						Status: utils.Ptr(tt.instanceState),
-					},
+				apiClient := &apiClientInstanceMocked{
+					instanceId:       instanceId,
+					instanceState:    tt.instanceState,
+					instanceGetFails: tt.instanceGetFails,
 				}
-			}
 
-			handler := PartialUpdateInstanceWaitHandler(context.Background(), apiClient, "", "", instanceId)
+				var wantRes *postgresflexalpha.GetInstanceResponse
+				if tt.wantResp {
+					wantRes = &postgresflexalpha.GetInstanceResponse{
+						Id:     &instanceId,
+						Status: postgresflexalpha.GetInstanceResponseGetStatusAttributeType(&tt.instanceState),
+					}
+				}
 
-			gotRes, err := handler.SetTimeout(10 * time.Millisecond).WaitWithContext(context.Background())
+				handler := PartialUpdateInstanceWaitHandler(context.Background(), apiClient, "", "", instanceId)
 
-			if (err != nil) != tt.wantErr {
-				t.Fatalf("handler error = %v, wantErr %v", err, tt.wantErr)
-			}
-			if !cmp.Equal(gotRes, wantRes) {
-				t.Fatalf("handler gotRes = %v, want %v", gotRes, wantRes)
-			}
-		})
+				gotRes, err := handler.SetTimeout(10 * time.Millisecond).WaitWithContext(context.Background())
+
+				if (err != nil) != tt.wantErr {
+					t.Fatalf("handler error = %v, wantErr %v", err, tt.wantErr)
+				}
+				if !cmp.Equal(gotRes, wantRes) {
+					t.Fatalf("handler gotRes = %v, want %v", gotRes, wantRes)
+				}
+			},
+		)
 	}
 }
 
@@ -280,23 +297,25 @@ func TestDeleteInstanceWaitHandler(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.desc, func(t *testing.T) {
-			instanceId := "foo-bar"
+		t.Run(
+			tt.desc, func(t *testing.T) {
+				instanceId := "foo-bar"
 
-			apiClient := &apiClientInstanceMocked{
-				instanceGetFails: tt.instanceGetFails,
-				instanceId:       instanceId,
-				instanceState:    tt.instanceState,
-			}
+				apiClient := &apiClientInstanceMocked{
+					instanceGetFails: tt.instanceGetFails,
+					instanceId:       instanceId,
+					instanceState:    tt.instanceState,
+				}
 
-			handler := DeleteInstanceWaitHandler(context.Background(), apiClient, "", "", instanceId)
+				handler := DeleteInstanceWaitHandler(context.Background(), apiClient, "", "", instanceId)
 
-			_, err := handler.SetTimeout(10 * time.Millisecond).WaitWithContext(context.Background())
+				_, err := handler.SetTimeout(10 * time.Millisecond).WaitWithContext(context.Background())
 
-			if (err != nil) != tt.wantErr {
-				t.Fatalf("handler error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
+				if (err != nil) != tt.wantErr {
+					t.Fatalf("handler error = %v, wantErr %v", err, tt.wantErr)
+				}
+			},
+		)
 	}
 }
 
@@ -326,24 +345,26 @@ func TestForceDeleteInstanceWaitHandler(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.desc, func(t *testing.T) {
-			instanceId := "foo-bar"
+		t.Run(
+			tt.desc, func(t *testing.T) {
+				instanceId := "foo-bar"
 
-			apiClient := &apiClientInstanceMocked{
-				instanceGetFails:       tt.instanceGetFails,
-				instanceIsForceDeleted: tt.instanceState == InstanceStateDeleted,
-				instanceId:             instanceId,
-				instanceState:          tt.instanceState,
-			}
+				apiClient := &apiClientInstanceMocked{
+					instanceGetFails:       tt.instanceGetFails,
+					instanceIsForceDeleted: tt.instanceState == InstanceStateDeleted,
+					instanceId:             instanceId,
+					instanceState:          tt.instanceState,
+				}
 
-			handler := ForceDeleteInstanceWaitHandler(context.Background(), apiClient, "", "", instanceId)
+				handler := ForceDeleteInstanceWaitHandler(context.Background(), apiClient, "", "", instanceId)
 
-			_, err := handler.SetTimeout(10 * time.Millisecond).WaitWithContext(context.Background())
+				_, err := handler.SetTimeout(10 * time.Millisecond).WaitWithContext(context.Background())
 
-			if (err != nil) != tt.wantErr {
-				t.Fatalf("handler error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
+				if (err != nil) != tt.wantErr {
+					t.Fatalf("handler error = %v, wantErr %v", err, tt.wantErr)
+				}
+			},
+		)
 	}
 }
 
@@ -374,22 +395,24 @@ func TestDeleteUserWaitHandler(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.desc, func(t *testing.T) {
-			userId := "foo-bar"
+		t.Run(
+			tt.desc, func(t *testing.T) {
+				userId := int64(1)
 
-			apiClient := &apiClientUserMocked{
-				getFails:      tt.getFails,
-				userId:        userId,
-				isUserDeleted: !tt.deleteFails,
-			}
+				apiClient := &apiClientUserMocked{
+					getFails:      tt.getFails,
+					userId:        userId,
+					isUserDeleted: !tt.deleteFails,
+				}
 
-			handler := DeleteUserWaitHandler(context.Background(), apiClient, "", "", "", userId)
+				handler := DeleteUserWaitHandler(context.Background(), apiClient, "", "", "", userId)
 
-			_, err := handler.SetTimeout(10 * time.Millisecond).WaitWithContext(context.Background())
+				_, err := handler.SetTimeout(10 * time.Millisecond).WaitWithContext(context.Background())
 
-			if (err != nil) != tt.wantErr {
-				t.Fatalf("handler error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
+				if (err != nil) != tt.wantErr {
+					t.Fatalf("handler error = %v, wantErr %v", err, tt.wantErr)
+				}
+			},
+		)
 	}
 }
