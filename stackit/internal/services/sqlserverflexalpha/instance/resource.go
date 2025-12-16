@@ -42,6 +42,11 @@ var (
 	_ resource.ResourceWithModifyPlan  = &instanceResource{}
 )
 
+var validNodeTypes []string = []string{
+	"Single",
+	"Replica",
+}
+
 type Model struct {
 	Id             types.String `tfsdk:"id"` // needed by TF
 	InstanceId     types.String `tfsdk:"instance_id"`
@@ -95,6 +100,7 @@ type flavorModel struct {
 	Description types.String `tfsdk:"description"`
 	CPU         types.Int64  `tfsdk:"cpu"`
 	RAM         types.Int64  `tfsdk:"ram"`
+	NodeType    types.String `tfsdk:"node_type"`
 }
 
 // Types corresponding to flavorModel
@@ -103,6 +109,7 @@ var flavorTypes = map[string]attr.Type{
 	"description": basetypes.StringType{},
 	"cpu":         basetypes.Int64Type{},
 	"ram":         basetypes.Int64Type{},
+	"nodeType":    basetypes.StringType{},
 }
 
 // Struct corresponding to Model.Storage
@@ -259,6 +266,15 @@ func (r *instanceResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 						Computed: true,
 						PlanModifiers: []planmodifier.String{
 							stringplanmodifier.UseStateForUnknown(),
+						},
+					},
+					"node_type": schema.StringAttribute{
+						Required: true,
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.UseStateForUnknown(),
+						},
+						Validators: []validator.String{
+							stringvalidator.OneOfCaseInsensitive(validNodeTypes...),
 						},
 					},
 					"cpu": schema.Int64Attribute{
@@ -497,7 +513,7 @@ func (r *instanceResource) Create(ctx context.Context, req resource.CreateReques
 	}
 
 	if flavor.Id.IsNull() || flavor.Id.IsUnknown() {
-		err := loadFlavorId(ctx, r.client, &model, flavor)
+		err := loadFlavorId(ctx, r.client, &model, flavor, storage)
 		if err != nil {
 			resp.Diagnostics.AddError(err.Error(), err.Error())
 			return
@@ -507,6 +523,7 @@ func (r *instanceResource) Create(ctx context.Context, req resource.CreateReques
 			"description": flavor.Description,
 			"cpu":         flavor.CPU,
 			"ram":         flavor.RAM,
+			"nodeType":    flavor.NodeType,
 		}
 		var flavorObject basetypes.ObjectValue
 		flavorObject, diags = types.ObjectValue(flavorTypes, flavorValues)

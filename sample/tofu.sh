@@ -6,7 +6,18 @@
 TERRAFORM_CONFIG=$(pwd)/sample.tfrc
 export TERRAFORM_CONFIG
 
-TF_LOG=TRACE
-export TF_LOG
+parsed_options=$(
+  getopt -n "$0" -o l -- "$@"
+) || exit
+eval "set -- $parsed_options"
+while [ "$#" -gt 0 ]; do
+  case $1 in
+    (-l) TF_LOG=TRACE
+         export TF_LOG
+         shift;;
+    (--) shift; break;;
+    (*) echo "Unknown option ${1}" # should never be reached.
+  esac
+done
 
-tofu "$1"
+tofu "$*"

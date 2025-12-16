@@ -6,14 +6,18 @@
 TERRAFORM_CONFIG=$(pwd)/sample.tfrc
 export TERRAFORM_CONFIG
 
-while getopts 'l' flag; do
-  case "${flag}" in
-    l)  TF_LOG=TRACE
-        export TF_LOG
-      ;;
-    *) echo "only flag 'l' is known"
-       exit 1 ;;
+parsed_options=$(
+  getopt -n "$0" -o l -- "$@"
+) || exit
+eval "set -- $parsed_options"
+while [ "$#" -gt 0 ]; do
+  case $1 in
+    (-l) TF_LOG=TRACE
+         export TF_LOG
+         shift;;
+    (--) shift; break;;
+    (*) echo "Unknown option ${1}" # should never be reached.
   esac
 done
 
-terraform "$1"
+terraform "$*"

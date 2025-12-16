@@ -1,12 +1,12 @@
-resource "stackitalpha_kms_keyring" "keyring" {
+resource "stackitprivatepreview_kms_keyring" "keyring" {
   project_id   = var.project_id
   display_name = "msh-keyring01"
   description  = "This is a test keyring for private endpoints"
 }
 
-resource "stackitalpha_kms_key" "key" {
+resource "stackitprivatepreview_kms_key" "key" {
   project_id   = var.project_id
-  keyring_id   = stackitalpha_kms_keyring.keyring.keyring_id
+  keyring_id   = stackitprivatepreview_kms_keyring.keyring.keyring_id
   display_name = "msh-key01"
   protection   = "software"
   algorithm    = "aes_256_gcm"
@@ -40,7 +40,7 @@ resource "stackitalpha_kms_key" "key" {
 #   }
 # }
 
-resource "stackitalpha_sqlserverflexalpha_instance" "ptlsdbsqlsrv" {
+resource "stackitprivatepreview_sqlserverflexalpha_instance" "ptlsdbsqlsrv" {
   project_id      = var.project_id
   name            = "msh-example-instance"
   backup_schedule = "0 0 * * *"
@@ -48,6 +48,7 @@ resource "stackitalpha_sqlserverflexalpha_instance" "ptlsdbsqlsrv" {
   flavor = {
     cpu = 4
     ram = 16
+    node_type = "Single"
   }
   storage = {
     class = "premium-perf2-stackit"
@@ -55,8 +56,8 @@ resource "stackitalpha_sqlserverflexalpha_instance" "ptlsdbsqlsrv" {
   }
   version = 2022
   encryption = {
-    key_id = stackitalpha_kms_key.key.key_id
-    keyring_id = stackitalpha_kms_keyring.keyring.keyring_id
+    key_id = stackitprivatepreview_kms_key.key.key_id
+    keyring_id = stackitprivatepreview_kms_keyring.keyring.keyring_id
 #    key_id = var.key_id
 #    keyring_id = var.keyring_id
     key_version = var.key_version
