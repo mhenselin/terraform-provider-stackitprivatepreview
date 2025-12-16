@@ -85,15 +85,17 @@ func (r *userDataSource) Configure(
 // Schema defines the schema for the data source.
 func (r *userDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	descriptions := map[string]string{
-		"main":        "SQLServer Flex user data source schema. Must have a `region` specified in the provider configuration.",
-		"id":          "Terraform's internal data source. ID. It is structured as \"`project_id`,`region`,`instance_id`,`user_id`\".",
-		"user_id":     "User ID.",
-		"instance_id": "ID of the SQLServer Flex instance.",
-		"project_id":  "STACKIT project ID to which the instance is associated.",
-		"username":    "Username of the SQLServer Flex instance.",
-		"roles":       "Database access levels for the user.",
-		"password":    "Password of the user account.",
-		"region":      "The resource region. If not defined, the provider region is used.",
+		"main":             "SQLServer Flex user data source schema. Must have a `region` specified in the provider configuration.",
+		"id":               "Terraform's internal data source. ID. It is structured as \"`project_id`,`region`,`instance_id`,`user_id`\".",
+		"user_id":          "User ID.",
+		"instance_id":      "ID of the SQLServer Flex instance.",
+		"project_id":       "STACKIT project ID to which the instance is associated.",
+		"username":         "Username of the SQLServer Flex instance.",
+		"roles":            "Database access levels for the user.",
+		"password":         "Password of the user account.",
+		"region":           "The resource region. If not defined, the provider region is used.",
+		"status":           "Status of the user.",
+		"default_database": "Default database of the user.",
 	}
 
 	resp.Schema = schema.Schema{
@@ -145,6 +147,12 @@ func (r *userDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, r
 				// the region cannot be found automatically, so it has to be passed
 				Optional:    true,
 				Description: descriptions["region"],
+			},
+			"status": schema.StringAttribute{
+				Computed: true,
+			},
+			"default_database": schema.StringAttribute{
+				Computed: true,
 			},
 		},
 	}
