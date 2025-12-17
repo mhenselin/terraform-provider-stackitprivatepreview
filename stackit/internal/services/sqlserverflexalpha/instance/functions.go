@@ -7,6 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	sqlserverflex "github.com/stackitcloud/terraform-provider-stackit/pkg/sqlserverflexalpha"
 	"github.com/stackitcloud/terraform-provider-stackit/stackit/internal/conversion"
 	"github.com/stackitcloud/terraform-provider-stackit/stackit/internal/core"
@@ -48,7 +49,7 @@ func mapFields(ctx context.Context, resp *sqlserverflex.GetInstanceResponse, mod
 		"description": flavor.Description,
 		"cpu":         flavor.CPU,
 		"ram":         flavor.RAM,
-		"nodeType":    flavor.NodeType,
+		"node_type":   flavor.NodeType,
 	}
 	flavorObject, diags := types.ObjectValue(flavorTypes, flavorValues)
 	if diags.HasError() {
@@ -107,11 +108,19 @@ func mapFields(ctx context.Context, resp *sqlserverflex.GetInstanceResponse, mod
 			return fmt.Errorf("creating network (acl list): %w", core.DiagsToError(diags))
 		}
 
+		var routerAddress string
+		if instance.Network.RouterAddress != nil {
+			routerAddress = *instance.Network.RouterAddress
+			diags.AddWarning("field missing while mapping fields", "router_address was empty in API response")
+		}
+		if instance.Network.InstanceAddress == nil {
+			return fmt.Errorf("creating network: no instance address returned")
+		}
 		networkValues = map[string]attr.Value{
 			"acl":              aclList,
 			"access_scope":     types.StringValue(string(*instance.Network.AccessScope)),
 			"instance_address": types.StringValue(*instance.Network.InstanceAddress),
-			"router_address":   types.StringValue(*instance.Network.RouterAddress),
+			"router_address":   types.StringValue(routerAddress),
 		}
 	}
 	networkObject, diags := types.ObjectValue(networkTypes, networkValues)
@@ -126,6 +135,30 @@ func mapFields(ctx context.Context, resp *sqlserverflex.GetInstanceResponse, mod
 		model.BackupSchedule = types.StringPointerValue(instance.BackupSchedule)
 	}
 
+	if instance.Replicas == nil {
+		return fmt.Errorf("instance has no replicas set")
+	}
+
+	if instance.RetentionDays == nil {
+		return fmt.Errorf("instance has no retention days set")
+	}
+
+	if instance.Version == nil {
+		return fmt.Errorf("instance has no version set")
+	}
+
+	if instance.Edition == nil {
+		return fmt.Errorf("instance has no edition set")
+	}
+
+	if instance.Status == nil {
+		return fmt.Errorf("instance has no status set")
+	}
+
+	if instance.IsDeletable == nil {
+		return fmt.Errorf("instance has no IsDeletable set")
+	}
+
 	model.Id = utils.BuildInternalTerraformId(model.ProjectId.ValueString(), region, instanceId)
 	model.InstanceId = types.StringValue(instanceId)
 	model.Name = types.StringPointerValue(instance.Name)
@@ -137,8 +170,9 @@ func mapFields(ctx context.Context, resp *sqlserverflex.GetInstanceResponse, mod
 	model.Region = types.StringValue(region)
 	model.Encryption = encryptionObject
 	model.Network = networkObject
-	model.RetentionDays = types.Int64Value(int64(*instance.RetentionDays))
+	model.RetentionDays = types.Int64Value(*instance.RetentionDays)
 	model.Status = types.StringValue(string(*instance.Status))
+	model.IsDeletable = types.BoolValue(*instance.IsDeletable)
 	return nil
 }
 
@@ -205,18 +239,16 @@ func toUpdatePayload(model *Model, storage *storageModel, network *networkModel)
 	if model == nil {
 		return nil, fmt.Errorf("nil model")
 	}
-
 	if model.Flavor.IsNull() || model.Flavor.IsUnknown() {
 		return nil, fmt.Errorf("nil flavor")
 	}
-
-	flavorId := ""
-	if !(model.Flavor.IsNull() || model.Flavor.IsUnknown()) {
-		modelValues := model.Flavor.Attributes()
-		if _, ok := modelValues["id"]; !ok {
-			return nil, fmt.Errorf("flavor has not yet been created")
-		}
-		flavorId = modelValues["id"].String()
+	var flavorMdl flavorModel
+	diag := model.Flavor.As(context.Background(), &flavorMdl, basetypes.ObjectAsOptions{
+		UnhandledNullAsEmpty:    true,
+		UnhandledUnknownAsEmpty: false,
+	})
+	if diag.HasError() {
+		return nil, fmt.Errorf("flavor conversion error: %v", diag.Errors())
 	}
 
 	storagePayload := &sqlserverflex.UpdateInstanceRequestPayloadGetStorageArgType{}
@@ -235,6 +267,7 @@ func toUpdatePayload(model *Model, storage *storageModel, network *networkModel)
 
 	// TODO - implement network.ACL as soon as it becomes available
 	replCount := int32(model.Replicas.ValueInt64())
+	flavorId := flavorMdl.Id.ValueString()
 	return &sqlserverflex.UpdateInstancePartiallyRequestPayload{
 		Acl:            &aclElements,
 		BackupSchedule: conversion.StringValueToPointer(model.BackupSchedule),
