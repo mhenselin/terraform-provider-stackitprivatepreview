@@ -9,15 +9,15 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/stackitcloud/stackit-sdk-go/core/utils"
-	"github.com/stackitcloud/stackit-sdk-go/services/sqlserverflex"
+	sqlserverflex "github.com/stackitcloud/terraform-provider-stackit/pkg/sqlserverflexalpha"
 )
 
 type sqlserverflexClientMocked struct {
 	returnError     bool
-	listFlavorsResp *sqlserverflex.ListFlavorsResponse
+	listFlavorsResp *sqlserverflex.GetFlavorsResponse
 }
 
-func (c *sqlserverflexClientMocked) ListFlavorsExecute(_ context.Context, _, _ string) (*sqlserverflex.ListFlavorsResponse, error) {
+func (c *sqlserverflexClientMocked) GetFlavorsExecute(_ context.Context, _, _ string) (*sqlserverflex.GetFlavorsResponse, error) {
 	if c.returnError {
 		return nil, fmt.Errorf("get flavors failed")
 	}
@@ -44,9 +44,7 @@ func TestMapFields(t *testing.T) {
 				InstanceId: types.StringValue("iid"),
 				ProjectId:  types.StringValue("pid"),
 			},
-			&sqlserverflex.GetInstanceResponse{
-				Item: &sqlserverflex.Instance{},
-			},
+			&sqlserverflex.GetInstanceResponse{},
 			&flavorModel{},
 			&storageModel{},
 			&optionsModel{},
@@ -85,35 +83,24 @@ func TestMapFields(t *testing.T) {
 				ProjectId:  types.StringValue("pid"),
 			},
 			&sqlserverflex.GetInstanceResponse{
-				Item: &sqlserverflex.Instance{
-					Acl: &sqlserverflex.ACL{
-						Items: &[]string{
-							"ip1",
-							"ip2",
-							"",
-						},
-					},
-					BackupSchedule: utils.Ptr("schedule"),
-					Flavor: &sqlserverflex.Flavor{
-						Cpu:         utils.Ptr(int64(12)),
-						Description: utils.Ptr("description"),
-						Id:          utils.Ptr("flavor_id"),
-						Memory:      utils.Ptr(int64(34)),
-					},
-					Id:       utils.Ptr("iid"),
-					Name:     utils.Ptr("name"),
-					Replicas: utils.Ptr(int64(56)),
-					Status:   utils.Ptr("status"),
-					Storage: &sqlserverflex.Storage{
-						Class: utils.Ptr("class"),
-						Size:  utils.Ptr(int64(78)),
-					},
-					Options: &map[string]string{
-						"edition":       "edition",
-						"retentionDays": "1",
-					},
-					Version: utils.Ptr("version"),
+				Acl: &[]string{
+					"ip1",
+					"ip2",
+					"",
 				},
+				BackupSchedule: utils.Ptr("schedule"),
+				FlavorId:       utils.Ptr("flavor_id"),
+				Id:             utils.Ptr("iid"),
+				Name:           utils.Ptr("name"),
+				Replicas:       sqlserverflex.GetInstanceResponseGetReplicasAttributeType(utils.Ptr(int32(56))),
+				Status:         sqlserverflex.GetInstanceResponseGetStatusAttributeType(utils.Ptr("status")),
+				Storage: &sqlserverflex.Storage{
+					Class: utils.Ptr("class"),
+					Size:  utils.Ptr(int64(78)),
+				},
+				Edition:       sqlserverflex.GetInstanceResponseGetEditionAttributeType(utils.Ptr("edition")),
+				RetentionDays: utils.Ptr(int64(1)),
+				Version:       sqlserverflex.GetInstanceResponseGetVersionAttributeType(utils.Ptr("version")),
 			},
 			&flavorModel{},
 			&storageModel{},
@@ -157,27 +144,21 @@ func TestMapFields(t *testing.T) {
 				ProjectId:  types.StringValue("pid"),
 			},
 			&sqlserverflex.GetInstanceResponse{
-				Item: &sqlserverflex.Instance{
-					Acl: &sqlserverflex.ACL{
-						Items: &[]string{
-							"ip1",
-							"ip2",
-							"",
-						},
-					},
-					BackupSchedule: utils.Ptr("schedule"),
-					Flavor:         nil,
-					Id:             utils.Ptr("iid"),
-					Name:           utils.Ptr("name"),
-					Replicas:       utils.Ptr(int64(56)),
-					Status:         utils.Ptr("status"),
-					Storage:        nil,
-					Options: &map[string]string{
-						"edition":       "edition",
-						"retentionDays": "1",
-					},
-					Version: utils.Ptr("version"),
+				Acl: &[]string{
+					"ip1",
+					"ip2",
+					"",
 				},
+				BackupSchedule: utils.Ptr("schedule"),
+				FlavorId:       nil,
+				Id:             utils.Ptr("iid"),
+				Name:           utils.Ptr("name"),
+				Replicas:       sqlserverflex.GetInstanceResponseGetReplicasAttributeType(utils.Ptr(int32(56))),
+				Status:         sqlserverflex.GetInstanceResponseGetStatusAttributeType(utils.Ptr("status")),
+				Storage:        nil,
+				Edition:        sqlserverflex.GetInstanceResponseGetEditionAttributeType(utils.Ptr("edition")),
+				RetentionDays:  utils.Ptr(int64(1)),
+				Version:        sqlserverflex.GetInstanceResponseGetVersionAttributeType(utils.Ptr("version")),
 			},
 			&flavorModel{
 				CPU: types.Int64Value(12),
@@ -235,27 +216,23 @@ func TestMapFields(t *testing.T) {
 				}),
 			},
 			&sqlserverflex.GetInstanceResponse{
-				Item: &sqlserverflex.Instance{
-					Acl: &sqlserverflex.ACL{
-						Items: &[]string{
-							"",
-							"ip1",
-							"ip2",
-						},
-					},
-					BackupSchedule: utils.Ptr("schedule"),
-					Flavor:         nil,
-					Id:             utils.Ptr("iid"),
-					Name:           utils.Ptr("name"),
-					Replicas:       utils.Ptr(int64(56)),
-					Status:         utils.Ptr("status"),
-					Storage:        nil,
-					Options: &map[string]string{
-						"edition":       "edition",
-						"retentionDays": "1",
-					},
-					Version: utils.Ptr("version"),
+				Acl: &[]string{
+					"",
+					"ip1",
+					"ip2",
 				},
+				BackupSchedule: utils.Ptr("schedule"),
+				FlavorId:       nil,
+				Id:             utils.Ptr("iid"),
+				Name:           utils.Ptr("name"),
+				Replicas:       sqlserverflex.GetInstanceResponseGetReplicasAttributeType(utils.Ptr(int32(56))),
+				Status:         sqlserverflex.GetInstanceResponseGetStatusAttributeType(utils.Ptr("status")),
+				Storage:        nil,
+				//Options: &map[string]string{
+				//	"edition":       "edition",
+				//	"retentionDays": "1",
+				//},
+				Version: sqlserverflex.GetInstanceResponseGetVersionAttributeType(utils.Ptr("version")),
 			},
 			&flavorModel{
 				CPU: types.Int64Value(12),
@@ -354,7 +331,7 @@ func TestToCreatePayload(t *testing.T) {
 		inputFlavor  *flavorModel
 		inputStorage *storageModel
 		inputOptions *optionsModel
-		expected     *sqlserverflex.CreateInstancePayload
+		expected     *sqlserverflex.CreateInstanceRequestPayload
 		isValid      bool
 	}{
 		{
@@ -364,12 +341,9 @@ func TestToCreatePayload(t *testing.T) {
 			&flavorModel{},
 			&storageModel{},
 			&optionsModel{},
-			&sqlserverflex.CreateInstancePayload{
-				Acl: &sqlserverflex.CreateInstancePayloadAcl{
-					Items: &[]string{},
-				},
-				Storage: &sqlserverflex.CreateInstancePayloadStorage{},
-				Options: &sqlserverflex.CreateInstancePayloadOptions{},
+			&sqlserverflex.CreateInstanceRequestPayload{
+				Acl:     &sqlserverflex.CreateInstanceRequestPayloadGetAclArgType{},
+				Storage: &sqlserverflex.CreateInstanceRequestPayloadGetStorageArgType{},
 			},
 			true,
 		},

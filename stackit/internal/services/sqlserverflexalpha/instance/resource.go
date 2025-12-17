@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	sqlserverflexUtils "github.com/stackitcloud/terraform-provider-stackit/stackit/internal/services/sqlserverflexalpha/utils"
 
@@ -55,7 +56,7 @@ type Model struct {
 	BackupSchedule types.String `tfsdk:"backup_schedule"`
 	Flavor         types.Object `tfsdk:"flavor"`
 	Encryption     types.Object `tfsdk:"encryption"`
-	isDeletable    types.Bool   `tfsdk:"is_deletable"`
+	IsDeletable    types.Bool   `tfsdk:"is_deletable"`
 	Storage        types.Object `tfsdk:"storage"`
 	Status         types.String `tfsdk:"status"`
 	Version        types.String `tfsdk:"version"`
@@ -109,7 +110,7 @@ var flavorTypes = map[string]attr.Type{
 	"description": basetypes.StringType{},
 	"cpu":         basetypes.Int64Type{},
 	"ram":         basetypes.Int64Type{},
-	"nodeType":    basetypes.StringType{},
+	"node_type":   basetypes.StringType{},
 }
 
 // Struct corresponding to Model.Storage
@@ -253,12 +254,27 @@ func (r *instanceResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
+			"is_deletable": schema.BoolAttribute{
+				Description: descriptions["is_deletable"],
+				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.UseStateForUnknown(),
+				},
+			},
+			// TODO - make it either flavor_id or ram, cpu and node_type
 			"flavor": schema.SingleNestedAttribute{
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifier.RequiresReplace(),
+					objectplanmodifier.UseStateForUnknown(),
+				},
 				Required: true,
 				Attributes: map[string]schema.Attribute{
 					"id": schema.StringAttribute{
+						Optional: true,
 						Computed: true,
 						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.RequiresReplace(),
 							stringplanmodifier.UseStateForUnknown(),
 						},
 					},
@@ -271,6 +287,7 @@ func (r *instanceResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 					"node_type": schema.StringAttribute{
 						Required: true,
 						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.RequiresReplace(),
 							stringplanmodifier.UseStateForUnknown(),
 						},
 						Validators: []validator.String{
@@ -279,9 +296,17 @@ func (r *instanceResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 					},
 					"cpu": schema.Int64Attribute{
 						Required: true,
+						PlanModifiers: []planmodifier.Int64{
+							int64planmodifier.RequiresReplace(),
+							int64planmodifier.UseStateForUnknown(),
+						},
 					},
 					"ram": schema.Int64Attribute{
 						Required: true,
+						PlanModifiers: []planmodifier.Int64{
+							int64planmodifier.RequiresReplace(),
+							int64planmodifier.UseStateForUnknown(),
+						},
 					},
 				},
 			},
@@ -295,7 +320,6 @@ func (r *instanceResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				Optional: true,
 				Computed: true,
 				PlanModifiers: []planmodifier.Object{
-					objectplanmodifier.RequiresReplace(),
 					objectplanmodifier.UseStateForUnknown(),
 				},
 				Attributes: map[string]schema.Attribute{
@@ -311,7 +335,6 @@ func (r *instanceResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 						Optional: true,
 						Computed: true,
 						PlanModifiers: []planmodifier.Int64{
-							int64planmodifier.RequiresReplace(),
 							int64planmodifier.UseStateForUnknown(),
 						},
 					},
@@ -321,6 +344,7 @@ func (r *instanceResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				Optional: true,
 				Computed: true,
 				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
@@ -335,7 +359,6 @@ func (r *instanceResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				Optional: true,
 				Computed: true,
 				PlanModifiers: []planmodifier.Int64{
-					int64planmodifier.RequiresReplace(),
 					int64planmodifier.UseStateForUnknown(),
 				},
 			},
@@ -356,6 +379,10 @@ func (r *instanceResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 			},
 			"encryption": schema.SingleNestedAttribute{
 				Required: true,
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifier.RequiresReplace(),
+					objectplanmodifier.UseStateForUnknown(),
+				},
 				Attributes: map[string]schema.Attribute{
 					"key_id": schema.StringAttribute{
 						Description: descriptions["key_id"],
@@ -398,13 +425,7 @@ func (r *instanceResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 						},
 					},
 				},
-				//Blocks:              nil,
-				//CustomType:          nil,
 				Description: descriptions["encryption"],
-				//MarkdownDescription: "",
-				//DeprecationMessage:  "",
-				//Validators:          nil,
-				PlanModifiers: []planmodifier.Object{},
 			},
 			"network": schema.SingleNestedAttribute{
 				Required: true,
@@ -414,6 +435,7 @@ func (r *instanceResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 						Required:    true,
 						PlanModifiers: []planmodifier.String{
 							stringplanmodifier.RequiresReplace(),
+							stringplanmodifier.UseStateForUnknown(),
 						},
 						Validators: []validator.String{
 							validate.NoSeparator(),
@@ -424,36 +446,25 @@ func (r *instanceResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 						ElementType: types.StringType,
 						Required:    true,
 						PlanModifiers: []planmodifier.List{
-							listplanmodifier.RequiresReplace(),
+							listplanmodifier.UseStateForUnknown(),
 						},
-						Validators: []validator.List{},
 					},
 					"instance_address": schema.StringAttribute{
 						Description: descriptions["instance_address"],
 						Computed:    true,
 						PlanModifiers: []planmodifier.String{
-							stringplanmodifier.RequiresReplace(),
-						},
-						Validators: []validator.String{
-							validate.NoSeparator(),
+							stringplanmodifier.UseStateForUnknown(),
 						},
 					},
 					"router_address": schema.StringAttribute{
 						Description: descriptions["router_address"],
 						Computed:    true,
 						PlanModifiers: []planmodifier.String{
-							stringplanmodifier.RequiresReplace(),
-						},
-						Validators: []validator.String{
-							validate.NoSeparator(),
+							stringplanmodifier.UseStateForUnknown(),
 						},
 					},
 				},
 				Description: descriptions["network"],
-				//MarkdownDescription: "",
-				//DeprecationMessage:  "",
-				//Validators:          nil,
-				PlanModifiers: []planmodifier.Object{},
 			},
 		},
 	}
@@ -523,7 +534,7 @@ func (r *instanceResource) Create(ctx context.Context, req resource.CreateReques
 			"description": flavor.Description,
 			"cpu":         flavor.CPU,
 			"ram":         flavor.RAM,
-			"nodeType":    flavor.NodeType,
+			"node_type":   flavor.NodeType,
 		}
 		var flavorObject basetypes.ObjectValue
 		flavorObject, diags = types.ObjectValue(flavorTypes, flavorValues)
@@ -550,7 +561,13 @@ func (r *instanceResource) Create(ctx context.Context, req resource.CreateReques
 	ctx = core.LogResponse(ctx)
 
 	instanceId := *createResp.Id
-	ctx = tflog.SetField(ctx, "instance_id", instanceId)
+	utils.SetAndLogStateFields(ctx, &resp.Diagnostics, &resp.State, map[string]any{
+		"instance_id": instanceId,
+	})
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	// The creation waiter sometimes returns an error from the API: "instance with id xxx has unexpected status Failure"
 	// which can be avoided by sleeping before wait
 	waitResp, err := wait.CreateInstanceWaitHandler(ctx, r.client, projectId, instanceId, region).SetSleepBeforeWait(30 * time.Second).WaitWithContext(ctx)
@@ -745,14 +762,45 @@ func (r *instanceResource) Update(ctx context.Context, req resource.UpdateReques
 		}
 	}
 
+	flavor := &flavorModel{}
+	if !(model.Flavor.IsNull() || model.Flavor.IsUnknown()) {
+		diags = model.Flavor.As(ctx, flavor, basetypes.ObjectAsOptions{})
+		resp.Diagnostics.Append(diags...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+	}
+
+	if flavor.Id.IsNull() || flavor.Id.IsUnknown() {
+		err := loadFlavorId(ctx, r.client, &model, flavor, storage)
+		if err != nil {
+			resp.Diagnostics.AddError(err.Error(), err.Error())
+			return
+		}
+		flavorValues := map[string]attr.Value{
+			"id":          flavor.Id,
+			"description": flavor.Description,
+			"cpu":         flavor.CPU,
+			"ram":         flavor.RAM,
+			"node_type":   flavor.NodeType,
+		}
+		var flavorObject basetypes.ObjectValue
+		flavorObject, diags = types.ObjectValue(flavorTypes, flavorValues)
+		resp.Diagnostics.Append(diags...)
+		if diags.HasError() {
+			return
+		}
+		model.Flavor = flavorObject
+	}
+
 	// Generate API request body from model
-	payload, err := toUpdatePayload(&model)
+	payload, err := toUpdatePayload(&model, storage, network)
 	if err != nil {
 		core.LogAndAddError(ctx, &resp.Diagnostics, "Error updating instance", fmt.Sprintf("Creating API payload: %v", err))
 		return
 	}
 	// Update existing instance
-	err = r.client.UpdateInstancePartiallyRequest(ctx, projectId, instanceId, region).UpdateInstancePartiallyRequestPayload(*payload).Execute()
+	err = r.client.UpdateInstancePartiallyRequest(ctx, projectId, region, instanceId).UpdateInstancePartiallyRequestPayload(*payload).Execute()
 	if err != nil {
 		core.LogAndAddError(ctx, &resp.Diagnostics, "Error updating instance", err.Error())
 		return
@@ -766,7 +814,6 @@ func (r *instanceResource) Update(ctx context.Context, req resource.UpdateReques
 		return
 	}
 
-	flavor := &flavorModel{}
 	// Map response body to schema
 	err = mapFields(ctx, waitResp, &model, flavor, storage, encryption, network, region)
 	if err != nil {

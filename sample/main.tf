@@ -14,6 +14,10 @@ resource "stackitprivatepreview_kms_key" "key" {
   access_scope = "SNA"
 }
 
+output "keyid" {
+  value = stackitprivatepreview_kms_key.key.key_id
+}
+
 # resource "stackitalpha_postgresflexalpha_instance" "ptlsdbsrv" {
 #   project_id      = var.project_id
 #   name            = "example-instance"
@@ -42,9 +46,9 @@ resource "stackitprivatepreview_kms_key" "key" {
 
 resource "stackitprivatepreview_sqlserverflexalpha_instance" "ptlsdbsqlsrv" {
   project_id      = var.project_id
-  name            = "msh-example-instance"
-  backup_schedule = "0 0 * * *"
-  retention_days = 32
+  name            = "msh-example-instance-002"
+  backup_schedule = "0 3 * * *"
+  retention_days = 31
   flavor = {
     cpu = 4
     ram = 16
@@ -52,7 +56,7 @@ resource "stackitprivatepreview_sqlserverflexalpha_instance" "ptlsdbsqlsrv" {
   }
   storage = {
     class = "premium-perf2-stackit"
-    size  = 5
+    size  = 50
   }
   version = 2022
   encryption = {
