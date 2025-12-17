@@ -1,12 +1,12 @@
-resource "stackitprivatepreview_kms_keyring" "keyring" {
+resource "stackit_kms_keyring" "keyring" {
   project_id   = var.project_id
   display_name = "msh-keyring01"
   description  = "This is a test keyring for private endpoints"
 }
 
-resource "stackitprivatepreview_kms_key" "key" {
+resource "stackit_kms_key" "key" {
   project_id   = var.project_id
-  keyring_id   = stackitprivatepreview_kms_keyring.keyring.keyring_id
+  keyring_id   = stackit_kms_keyring.keyring.keyring_id
   display_name = "msh-key01"
   protection   = "software"
   algorithm    = "aes_256_gcm"
@@ -15,7 +15,7 @@ resource "stackitprivatepreview_kms_key" "key" {
 }
 
 output "keyid" {
-  value = stackitprivatepreview_kms_key.key.key_id
+  value = stackit_kms_key.key.key_id
 }
 
 # resource "stackitalpha_postgresflexalpha_instance" "ptlsdbsrv" {
@@ -60,8 +60,8 @@ resource "stackitprivatepreview_sqlserverflexalpha_instance" "ptlsdbsqlsrv" {
   }
   version = 2022
   encryption = {
-    key_id = stackitprivatepreview_kms_key.key.key_id
-    keyring_id = stackitprivatepreview_kms_keyring.keyring.keyring_id
+    key_id = stackit_kms_key.key.key_id
+    keyring_id = stackit_kms_keyring.keyring.keyring_id
 #    key_id = var.key_id
 #    keyring_id = var.keyring_id
     key_version = var.key_version

@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	sqlserverflexUtils "github.com/stackitcloud/terraform-provider-stackit/stackit/internal/services/sqlserverflexalpha/utils"
@@ -190,17 +191,23 @@ func (r *instanceResource) ModifyPlan(ctx context.Context, req resource.ModifyPl
 // Schema defines the schema for the resource.
 func (r *instanceResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	descriptions := map[string]string{
-		"main":            "SQLServer Flex instance resource schema. Must have a `region` specified in the provider configuration.",
-		"id":              "Terraform's internal resource ID. It is structured as \"`project_id`,`region`,`instance_id`\".",
-		"instance_id":     "ID of the SQLServer Flex instance.",
-		"project_id":      "STACKIT project ID to which the instance is associated.",
-		"name":            "Instance name.",
-		"acl":             "The Access Control List (ACL) for the SQLServer Flex instance.",
-		"backup_schedule": `The backup schedule. Should follow the cron scheduling system format (e.g. "0 0 * * *")`,
-		"options":         "Custom parameters for the SQLServer Flex instance.",
-		"region":          "The resource region. If not defined, the provider region is used.",
-		"encryption":      "The encryption block.",
-		"key_id":          "Key ID of the encryption key.",
+		"main":             "SQLServer Flex ALPHA instance resource schema. Must have a `region` specified in the provider configuration.",
+		"id":               "Terraform's internal resource ID. It is structured as \"`project_id`,`region`,`instance_id`\".",
+		"instance_id":      "ID of the SQLServer Flex instance.",
+		"project_id":       "STACKIT project ID to which the instance is associated.",
+		"name":             "Instance name.",
+		"access_scope":     "The access scope of the instance. (e.g. SNA)",
+		"acl":              "The Access Control List (ACL) for the SQLServer Flex instance.",
+		"backup_schedule":  `The backup schedule. Should follow the cron scheduling system format (e.g. "0 0 * * *")`,
+		"region":           "The resource region. If not defined, the provider region is used.",
+		"encryption":       "The encryption block.",
+		"network":          "The network block.",
+		"keyring_id":       "STACKIT KMS - KeyRing ID of the encryption key to use.",
+		"key_id":           "STACKIT KMS - Key ID of the encryption key to use.",
+		"key_version":      "STACKIT KMS - Key version to use in the encryption key.",
+		"service:account":  "STACKIT KMS - service account to use in the encryption key.",
+		"instance_address": "The returned instance IP address of the SQLServer Flex instance.",
+		"router_address":   "The returned router IP address of the SQLServer Flex instance.",
 	}
 
 	resp.Schema = schema.Schema{
@@ -291,7 +298,14 @@ func (r *instanceResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 							stringplanmodifier.UseStateForUnknown(),
 						},
 						Validators: []validator.String{
+							stringvalidator.ConflictsWith([]path.Expression{
+								path.MatchRelative().AtParent().AtName("id"),
+							}...),
 							stringvalidator.OneOfCaseInsensitive(validNodeTypes...),
+							stringvalidator.AlsoRequires([]path.Expression{
+								path.MatchRelative().AtParent().AtName("cpu"),
+								path.MatchRelative().AtParent().AtName("ram"),
+							}...),
 						},
 					},
 					"cpu": schema.Int64Attribute{
@@ -300,12 +314,30 @@ func (r *instanceResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 							int64planmodifier.RequiresReplace(),
 							int64planmodifier.UseStateForUnknown(),
 						},
+						Validators: []validator.Int64{
+							int64validator.ConflictsWith([]path.Expression{
+								path.MatchRelative().AtParent().AtName("id"),
+							}...),
+							int64validator.AlsoRequires([]path.Expression{
+								path.MatchRelative().AtParent().AtName("node_type"),
+								path.MatchRelative().AtParent().AtName("ram"),
+							}...),
+						},
 					},
 					"ram": schema.Int64Attribute{
 						Required: true,
 						PlanModifiers: []planmodifier.Int64{
 							int64planmodifier.RequiresReplace(),
 							int64planmodifier.UseStateForUnknown(),
+						},
+						Validators: []validator.Int64{
+							int64validator.ConflictsWith([]path.Expression{
+								path.MatchRelative().AtParent().AtName("id"),
+							}...),
+							int64validator.AlsoRequires([]path.Expression{
+								path.MatchRelative().AtParent().AtName("node_type"),
+								path.MatchRelative().AtParent().AtName("cpu"),
+							}...),
 						},
 					},
 				},

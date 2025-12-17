@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/stackitcloud/terraform-provider-stackit/stackit/internal/conversion"
-	postgresflexUtils "github.com/stackitcloud/terraform-provider-stackit/stackit/internal/services/postgresflex/utils"
+	postgresflexUtils "github.com/stackitcloud/terraform-provider-stackit/stackit/internal/services/postgresflexalpha/utils"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -18,7 +18,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/stackitcloud/stackit-sdk-go/services/postgresflex"
+	postgresflex "github.com/stackitcloud/terraform-provider-stackit/pkg/postgresflexalpha"
 )
 
 // Ensure the implementation satisfies the expected interfaces.
@@ -27,7 +27,7 @@ var (
 )
 
 type DataSourceModel struct {
-	Id         types.String `tfsdk:"id"` // needed by TF
+	Id         types.Int64  `tfsdk:"id"` // needed by TF
 	UserId     types.String `tfsdk:"user_id"`
 	InstanceId types.String `tfsdk:"instance_id"`
 	ProjectId  types.String `tfsdk:"project_id"`
@@ -153,7 +153,7 @@ func (r *userDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 	ctx = tflog.SetField(ctx, "user_id", userId)
 	ctx = tflog.SetField(ctx, "region", region)
 
-	recordSetResp, err := r.client.GetUser(ctx, projectId, region, instanceId, userId).Execute()
+	recordSetResp, err := r.client.GetUserRequest(ctx, projectId, region, instanceId, userId).Execute()
 	if err != nil {
 		utils.LogError(
 			ctx,
