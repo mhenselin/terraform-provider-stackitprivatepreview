@@ -43,7 +43,7 @@ func New(version string) func() provider.Provider {
 }
 
 func (p *Provider) Metadata(_ context.Context, _ provider.MetadataRequest, resp *provider.MetadataResponse) {
-	resp.TypeName = "stackitalpha"
+	resp.TypeName = "stackitprivatepreview"
 	resp.Version = p.version
 }
 
