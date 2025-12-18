@@ -1,3 +1,5 @@
+# Copyright (c) STACKIT
+
 resource "stackitprivatepreview_postgresflexalpha_database" "example" {
   project_id  = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
   instance_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"

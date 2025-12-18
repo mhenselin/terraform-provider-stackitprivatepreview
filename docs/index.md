@@ -1,34 +1,31 @@
-# STACKIT Terraform Provider
+# STACKITPRIVATEPREVIEW Terraform Provider
 
 The STACKIT Terraform provider is the official Terraform provider to integrate all the resources developed by [STACKIT](https://www.stackit.de/en/).
 
 ## Example Usage
 
 ```terraform
+# Copyright (c) STACKIT
+
 provider "stackitprivatepreview" {
   default_region = "eu01"
 }
-```
-### Example with Authentication
 
-```terraform
+# Authentication
+
 # Token flow (scheduled for deprecation and will be removed on December 17, 2025)
 provider "stackitprivatepreview" {
   default_region        = "eu01"
   service_account_token = var.service_account_token
 }
-```
 
-```terraform
 # Key flow
 provider "stackitprivatepreview" {
   default_region      = "eu01"
   service_account_key = var.service_account_key
   private_key         = var.private_key
 }
-```
 
-```terraform
 # Key flow (using path)
 provider "stackitprivatepreview" {
   default_region           = "eu01"
