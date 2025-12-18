@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/stackitcloud/terraform-provider-stackit/pkg/sqlserverflexalpha"
+	sqlserverflex "github.com/stackitcloud/terraform-provider-stackit/pkg/sqlserverflexalpha"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/stackitcloud/stackit-sdk-go/core/config"
@@ -16,7 +16,7 @@ func ConfigureClient(
 	ctx context.Context,
 	providerData *core.ProviderData,
 	diags *diag.Diagnostics,
-) *sqlserverflexalpha.APIClient {
+) *sqlserverflex.APIClient {
 	apiClientConfigOptions := []config.ConfigurationOption{
 		config.WithCustomAuth(providerData.RoundTripper),
 		utils.UserAgentConfigOption(providerData.Version),
@@ -29,7 +29,7 @@ func ConfigureClient(
 	} else {
 		apiClientConfigOptions = append(apiClientConfigOptions, config.WithRegion(providerData.GetRegion()))
 	}
-	apiClient, err := sqlserverflexalpha.NewAPIClient(apiClientConfigOptions...)
+	apiClient, err := sqlserverflex.NewAPIClient(apiClientConfigOptions...)
 	if err != nil {
 		core.LogAndAddError(
 			ctx,
