@@ -6,14 +6,14 @@ description: |-
   Postgres Flex database resource schema. Must have a region specified in the provider configuration.
 ---
 
-# stackit_postgresflex_database (Resource)
+# stackitprivatepreview_postgresflexalpha_database (Resource)
 
 Postgres Flex database resource schema. Must have a `region` specified in the provider configuration.
 
 ## Example Usage
 
 ```terraform
-resource "stackit_postgresflex_database" "example" {
+resource "stackitprivatepreview_postgresflexalpha_database" "example" {
   project_id  = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
   instance_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
   name        = "mydb"
@@ -22,7 +22,7 @@ resource "stackit_postgresflex_database" "example" {
 
 # Only use the import statement, if you want to import an existing postgresflex database
 import {
-  to = stackit_postgresflex_database.import-example
+  to = stackitprivatepreview_postgresflexalpha_database.import-example
   id = "${var.project_id},${var.region},${var.postgres_instance_id},${var.postgres_database_id}"
 }
 ```

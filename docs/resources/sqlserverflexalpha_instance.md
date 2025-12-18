@@ -6,14 +6,14 @@ description: |-
   SQLServer Flex instance resource schema. Must have a region specified in the provider configuration.
 ---
 
-# stackit_sqlserverflex_instance (Resource)
+# stackitprivatepreview_sqlserverflexalpha_instance (Resource)
 
 SQLServer Flex instance resource schema. Must have a `region` specified in the provider configuration.
 
 ## Example Usage
 
 ```terraform
-resource "stackit_sqlserverflex_instance" "example" {
+resource "stackitprivatepreview_sqlserverflexalpha_instance" "example" {
   project_id      = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
   name            = "example-instance"
   acl             = ["XXX.XXX.XXX.X/XX", "XX.XXX.XX.X/XX"]
@@ -31,7 +31,7 @@ resource "stackit_sqlserverflex_instance" "example" {
 
 # Only use the import statement, if you want to import an existing sqlserverflex instance
 import {
-  to = stackit_sqlserverflex_instance.import-example
+  to = stackitprivatepreview_sqlserverflexalpha_instance.import-example
   id = "${var.project_id},${var.region},${var.sql_instance_id}"
 }
 ```
