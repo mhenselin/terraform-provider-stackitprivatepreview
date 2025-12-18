@@ -8,22 +8,27 @@ The STACKIT Terraform provider is the official Terraform provider to integrate a
 provider "stackitprivatepreview" {
   default_region = "eu01"
 }
+```
+### Example with Authentication
 
-# Authentication
-
+```terraform
 # Token flow (scheduled for deprecation and will be removed on December 17, 2025)
 provider "stackitprivatepreview" {
   default_region        = "eu01"
   service_account_token = var.service_account_token
 }
+```
 
+```terraform
 # Key flow
 provider "stackitprivatepreview" {
   default_region      = "eu01"
   service_account_key = var.service_account_key
   private_key         = var.private_key
 }
+```
 
+```terraform
 # Key flow (using path)
 provider "stackitprivatepreview" {
   default_region           = "eu01"
