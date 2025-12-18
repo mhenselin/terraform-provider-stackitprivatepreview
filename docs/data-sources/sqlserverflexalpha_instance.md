@@ -6,14 +6,14 @@ description: |-
   SQLServer Flex instance data source schema. Must have a region specified in the provider configuration.
 ---
 
-# stackit_sqlserverflex_instance (Data Source)
+# stackitprivatepreview_sqlserverflexalpha_instance (Data Source)
 
 SQLServer Flex instance data source schema. Must have a `region` specified in the provider configuration.
 
 ## Example Usage
 
 ```terraform
-data "stackit_sqlserverflex_instance" "example" {
+data "stackitprivatepreview_sqlserverflexalpha_instance" "example" {
   project_id  = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
   instance_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 }

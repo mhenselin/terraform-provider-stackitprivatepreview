@@ -6,14 +6,14 @@ description: |-
   Postgres Flex database resource schema. Must have a region specified in the provider configuration.
 ---
 
-# stackit_postgresflex_database (Data Source)
+# stackitprivatepreview_postgresflexalpha_database (Data Source)
 
 Postgres Flex database resource schema. Must have a `region` specified in the provider configuration.
 
 ## Example Usage
 
 ```terraform
-data "stackit_postgresflex_database" "example" {
+data "stackitprivatepreview_postgresflexalpha_database" "example" {
   project_id  = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
   instance_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
   database_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"

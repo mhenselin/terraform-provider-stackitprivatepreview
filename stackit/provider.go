@@ -18,7 +18,6 @@ import (
 	"github.com/stackitcloud/stackit-sdk-go/core/config"
 	"github.com/stackitcloud/terraform-provider-stackit/stackit/internal/core"
 	"github.com/stackitcloud/terraform-provider-stackit/stackit/internal/features"
-	roleAssignements "github.com/stackitcloud/terraform-provider-stackit/stackit/internal/services/authorization/roleassignments"
 	postgresFlexAlphaInstance "github.com/stackitcloud/terraform-provider-stackit/stackit/internal/services/postgresflexalpha/instance"
 	sqlServerFlexAlpaUser "github.com/stackitcloud/terraform-provider-stackit/stackit/internal/services/sqlserverflexalpha/user"
 )
@@ -494,7 +493,5 @@ func (p *Provider) Resources(_ context.Context) []func() resource.Resource {
 		postgresFlexAlphaInstance.NewInstanceResource,
 		sqlServerFlexAlpaUser.NewUserResource,
 	}
-	resources = append(resources, roleAssignements.NewRoleAssignmentResources()...)
-
 	return resources
 }
