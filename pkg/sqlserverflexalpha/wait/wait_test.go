@@ -8,7 +8,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/stackitcloud/stackit-sdk-go/core/oapierror"
 	"github.com/stackitcloud/stackit-sdk-go/core/utils"
-	"github.com/stackitcloud/stackit-sdk-go/services/sqlserverflex"
+	sqlserverflex "github.com/stackitcloud/terraform-provider-stackit/pkg/sqlserverflexalpha"
 )
 
 // Used for testing instance operations
@@ -19,7 +19,7 @@ type apiClientInstanceMocked struct {
 	instanceGetFails  bool
 }
 
-func (a *apiClientInstanceMocked) GetInstanceExecute(_ context.Context, _, _, _ string) (*sqlserverflex.GetInstanceResponse, error) {
+func (a *apiClientInstanceMocked) GetInstanceRequestExecute(_ context.Context, _, _, _ string) (*sqlserverflex.GetInstanceResponse, error) {
 	if a.instanceGetFails {
 		return nil, &oapierror.GenericOpenAPIError{
 			StatusCode: 500,
@@ -33,10 +33,8 @@ func (a *apiClientInstanceMocked) GetInstanceExecute(_ context.Context, _, _, _ 
 	}
 
 	return &sqlserverflex.GetInstanceResponse{
-		Item: &sqlserverflex.Instance{
-			Id:     &a.instanceId,
-			Status: &a.instanceState,
-		},
+		Id:     &a.instanceId,
+		Status: sqlserverflex.GetInstanceResponseGetStatusAttributeType(&a.instanceState),
 	}, nil
 }
 func TestCreateInstanceWaitHandler(t *testing.T) {
@@ -96,10 +94,8 @@ func TestCreateInstanceWaitHandler(t *testing.T) {
 			var wantRes *sqlserverflex.GetInstanceResponse
 			if tt.wantResp {
 				wantRes = &sqlserverflex.GetInstanceResponse{
-					Item: &sqlserverflex.Instance{
-						Id:     &instanceId,
-						Status: utils.Ptr(tt.instanceState),
-					},
+					Id:     &instanceId,
+					Status: sqlserverflex.GetInstanceResponseGetStatusAttributeType(utils.Ptr(tt.instanceState)),
 				}
 			}
 
@@ -173,10 +169,8 @@ func TestUpdateInstanceWaitHandler(t *testing.T) {
 			var wantRes *sqlserverflex.GetInstanceResponse
 			if tt.wantResp {
 				wantRes = &sqlserverflex.GetInstanceResponse{
-					Item: &sqlserverflex.Instance{
-						Id:     &instanceId,
-						Status: utils.Ptr(tt.instanceState),
-					},
+					Id:     &instanceId,
+					Status: sqlserverflex.GetInstanceResponseGetStatusAttributeType(utils.Ptr(tt.instanceState)),
 				}
 			}
 

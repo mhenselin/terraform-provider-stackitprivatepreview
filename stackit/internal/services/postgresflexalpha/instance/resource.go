@@ -1,4 +1,4 @@
-package postgresflexa
+package postgresflex
 
 import (
 	"context"

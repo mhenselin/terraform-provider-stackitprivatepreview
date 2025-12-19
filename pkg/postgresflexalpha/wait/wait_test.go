@@ -8,7 +8,8 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stackitcloud/stackit-sdk-go/core/oapierror"
-	"github.com/stackitcloud/terraform-provider-stackit/pkg/postgresflexalpha"
+	"github.com/stackitcloud/stackit-sdk-go/core/utils"
+	postgresflex "github.com/stackitcloud/terraform-provider-stackit/pkg/postgresflexalpha"
 )
 
 // Used for testing instance operations
@@ -20,12 +21,7 @@ type apiClientInstanceMocked struct {
 	usersGetErrorStatus    int
 }
 
-var _ APIClientInstanceInterface = &apiClientInstanceMocked{}
-
-func (a *apiClientInstanceMocked) GetInstanceRequestExecute(
-	_ context.Context,
-	_, _, _ string,
-) (*postgresflexalpha.GetInstanceResponse, error) {
+func (a *apiClientInstanceMocked) GetInstanceRequestExecute(_ context.Context, _, _, _ string) (*postgresflex.GetInstanceResponse, error) {
 	if a.instanceGetFails {
 		return nil, &oapierror.GenericOpenAPIError{
 			StatusCode: 500,
@@ -38,16 +34,13 @@ func (a *apiClientInstanceMocked) GetInstanceRequestExecute(
 		}
 	}
 
-	return &postgresflexalpha.GetInstanceResponse{
+	return &postgresflex.GetInstanceResponse{
 		Id:     &a.instanceId,
-		Status: postgresflexalpha.GetInstanceResponseGetStatusAttributeType(&a.instanceState),
+		Status: postgresflex.GetInstanceResponseGetStatusAttributeType(&a.instanceState),
 	}, nil
 }
 
-func (a *apiClientInstanceMocked) ListUsersRequestExecute(
-	_ context.Context,
-	_, _, _ string,
-) (*postgresflexalpha.ListUserResponse, error) {
+func (a *apiClientInstanceMocked) ListUsersRequestExecute(_ context.Context, _, _, _ string) (*postgresflex.ListUserResponse, error) {
 	if a.usersGetErrorStatus != 0 {
 		return nil, &oapierror.GenericOpenAPIError{
 			StatusCode: a.usersGetErrorStatus,
@@ -55,19 +48,11 @@ func (a *apiClientInstanceMocked) ListUsersRequestExecute(
 	}
 
 	aux := int64(0)
-	size := int64(math.MaxInt64)
-	pages := int64(math.MaxInt64)
-
-	pagination := postgresflexalpha.Pagination{
-		Page:       &aux,
-		Size:       &size,
-		Sort:       nil,
-		TotalPages: &pages,
-		TotalRows:  &pages,
-	}
-	return &postgresflexalpha.ListUserResponse{
-		Pagination: &pagination,
-		Users:      &[]postgresflexalpha.ListUser{},
+	return &postgresflex.ListUserResponse{
+		Pagination: &postgresflex.Pagination{
+			TotalRows: &aux,
+		},
+		Users: &[]postgresflex.ListUser{},
 	}, nil
 }
 
@@ -78,10 +63,7 @@ type apiClientUserMocked struct {
 	isUserDeleted bool
 }
 
-func (a *apiClientUserMocked) GetUserRequestExecute(_ context.Context, _, _, _ string, _ int64) (
-	*postgresflexalpha.GetUserResponse,
-	error,
-) {
+func (a *apiClientUserMocked) GetUserRequestExecute(_ context.Context, _, _, _ string, _ int64) (*postgresflex.GetUserResponse, error) {
 	if a.getFails {
 		return nil, &oapierror.GenericOpenAPIError{
 			StatusCode: 500,
@@ -94,7 +76,7 @@ func (a *apiClientUserMocked) GetUserRequestExecute(_ context.Context, _, _, _ s
 		}
 	}
 
-	return &postgresflexalpha.GetUserResponse{
+	return &postgresflex.GetUserResponse{
 		Id: &a.userId,
 	}, nil
 }
@@ -160,23 +142,21 @@ func TestCreateInstanceWaitHandler(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(
-			tt.desc, func(t *testing.T) {
-				instanceId := "foo-bar"
+		t.Run(tt.desc, func(t *testing.T) {
+			instanceId := "foo-bar"
 
-				apiClient := &apiClientInstanceMocked{
-					instanceId:          instanceId,
-					instanceState:       tt.instanceState,
-					instanceGetFails:    tt.instanceGetFails,
-					usersGetErrorStatus: tt.usersGetErrorStatus,
-				}
+			apiClient := &apiClientInstanceMocked{
+				instanceId:          instanceId,
+				instanceState:       tt.instanceState,
+				instanceGetFails:    tt.instanceGetFails,
+				usersGetErrorStatus: tt.usersGetErrorStatus,
+			}
 
-				var wantRes *postgresflexalpha.GetInstanceResponse
-				if tt.wantResp {
-					wantRes = &postgresflexalpha.GetInstanceResponse{
-						Id:     &instanceId,
-						Status: postgresflexalpha.GetInstanceResponseGetStatusAttributeType(&tt.instanceState),
-					}
+			var wantRes *postgresflex.GetInstanceResponse
+			if tt.wantResp {
+				wantRes = &postgresflex.GetInstanceResponse{
+					Id:     &instanceId,
+					Status: postgresflex.GetInstanceResponseGetStatusAttributeType(utils.Ptr(tt.instanceState)),
 				}
 
 				handler := CreateInstanceWaitHandler(context.Background(), apiClient, "", "", instanceId)
@@ -238,22 +218,20 @@ func TestUpdateInstanceWaitHandler(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(
-			tt.desc, func(t *testing.T) {
-				instanceId := "foo-bar"
+		t.Run(tt.desc, func(t *testing.T) {
+			instanceId := "foo-bar"
 
-				apiClient := &apiClientInstanceMocked{
-					instanceId:       instanceId,
-					instanceState:    tt.instanceState,
-					instanceGetFails: tt.instanceGetFails,
-				}
+			apiClient := &apiClientInstanceMocked{
+				instanceId:       instanceId,
+				instanceState:    tt.instanceState,
+				instanceGetFails: tt.instanceGetFails,
+			}
 
-				var wantRes *postgresflexalpha.GetInstanceResponse
-				if tt.wantResp {
-					wantRes = &postgresflexalpha.GetInstanceResponse{
-						Id:     &instanceId,
-						Status: postgresflexalpha.GetInstanceResponseGetStatusAttributeType(&tt.instanceState),
-					}
+			var wantRes *postgresflex.GetInstanceResponse
+			if tt.wantResp {
+				wantRes = &postgresflex.GetInstanceResponse{
+					Id:     &instanceId,
+					Status: postgresflex.GetInstanceResponseGetStatusAttributeType(utils.Ptr(tt.instanceState)),
 				}
 
 				handler := PartialUpdateInstanceWaitHandler(context.Background(), apiClient, "", "", instanceId)
@@ -395,15 +373,14 @@ func TestDeleteUserWaitHandler(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(
-			tt.desc, func(t *testing.T) {
-				userId := int64(1)
+		t.Run(tt.desc, func(t *testing.T) {
+			userId := int64(1001)
 
-				apiClient := &apiClientUserMocked{
-					getFails:      tt.getFails,
-					userId:        userId,
-					isUserDeleted: !tt.deleteFails,
-				}
+			apiClient := &apiClientUserMocked{
+				getFails:      tt.getFails,
+				userId:        userId,
+				isUserDeleted: !tt.deleteFails,
+			}
 
 				handler := DeleteUserWaitHandler(context.Background(), apiClient, "", "", "", userId)
 
