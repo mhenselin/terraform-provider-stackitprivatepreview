@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/stackitcloud/terraform-provider-stackit/pkg/postgresflexalpha"
-	"github.com/stackitcloud/terraform-provider-stackit/pkg/postgresflexalpha/wait"
-	postgresflexUtils "github.com/stackitcloud/terraform-provider-stackit/stackit/internal/services/postgresflexalpha/utils"
+	"github.com/mhenselin/terraform-provider-stackitprivatepreview/pkg/postgresflexalpha"
+	"github.com/mhenselin/terraform-provider-stackitprivatepreview/pkg/postgresflexalpha/wait"
+	postgresflexUtils "github.com/mhenselin/terraform-provider-stackitprivatepreview/stackit/internal/services/postgresflexalpha/utils"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -18,10 +18,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/stackitcloud/terraform-provider-stackit/stackit/internal/conversion"
-	"github.com/stackitcloud/terraform-provider-stackit/stackit/internal/core"
-	"github.com/stackitcloud/terraform-provider-stackit/stackit/internal/utils"
-	"github.com/stackitcloud/terraform-provider-stackit/stackit/internal/validate"
+	"github.com/mhenselin/terraform-provider-stackitprivatepreview/stackit/internal/conversion"
+	"github.com/mhenselin/terraform-provider-stackitprivatepreview/stackit/internal/core"
+	"github.com/mhenselin/terraform-provider-stackitprivatepreview/stackit/internal/utils"
+	"github.com/mhenselin/terraform-provider-stackitprivatepreview/stackit/internal/validate"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -720,13 +720,13 @@ func mapFields(ctx context.Context, resp *postgresflexalpha.GetInstanceResponse,
 			"ram":         flavor.RAM,
 		}
 	} else {
-		// TODO
-		//flavorValues = map[string]attr.Value{
+		// TODO @mhenselin
+		// flavorValues = map[string]attr.Value{
 		//	"id":          types.StringValue(*instance.FlavorId),
-		//	"description": types.StringValue(*instance.Flavor.Description),
-		//	"cpu":         types.Int64PointerValue(instance.Flavor.Cpu),
-		//	"ram":         types.Int64PointerValue(instance.Flavor.Memory),
-		//}
+		//	"description": types.StringValue(*instance.FlavorId.Description),
+		//	"cpu":         types.Int64PointerValue(instance.FlavorId.Cpu),
+		//	"ram":         types.Int64PointerValue(instance.FlavorId.Memory),
+		// }
 	}
 	flavorObject, diags := types.ObjectValue(flavorTypes, flavorValues)
 	if diags.HasError() {

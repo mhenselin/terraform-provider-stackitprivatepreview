@@ -1,5 +1,3 @@
-// Copyright (c) STACKIT
-
 package postgresflex_test
 
 import (
@@ -13,11 +11,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/stackitcloud/stackit-sdk-go/core/utils"
 
+	"github.com/mhenselin/terraform-provider-stackitprivatepreview/stackit/internal/core"
+	"github.com/mhenselin/terraform-provider-stackitprivatepreview/stackit/internal/testutil"
 	"github.com/stackitcloud/stackit-sdk-go/core/config"
-	"github.com/stackitcloud/stackit-sdk-go/services/postgresflex"
-	"github.com/stackitcloud/stackit-sdk-go/services/postgresflex/wait"
-	"github.com/stackitcloud/terraform-provider-stackit/stackit/internal/core"
-	"github.com/stackitcloud/terraform-provider-stackit/stackit/internal/testutil"
+
+	postgresflex "github.com/mhenselin/terraform-provider-stackitprivatepreview/pkg/postgresflexalpha"
+	"github.com/mhenselin/terraform-provider-stackitprivatepreview/pkg/postgresflexalpha/wait"
 )
 
 // Instance resource data
@@ -346,18 +345,20 @@ func testAccCheckPostgresFlexDestroy(s *terraform.State) error {
 		instancesToDestroy = append(instancesToDestroy, instanceId)
 	}
 
-	instancesResp, err := client.ListInstances(ctx, testutil.ProjectId, testutil.Region).Execute()
+	instancesResp, err := client.ListInstancesRequest(ctx, testutil.ProjectId, testutil.Region).Execute()
 	if err != nil {
 		return fmt.Errorf("getting instancesResp: %w", err)
 	}
 
-	items := *instancesResp.Items
+	items := *instancesResp.Instances
 	for i := range items {
 		if items[i].Id == nil {
 			continue
 		}
 		if utils.Contains(instancesToDestroy, *items[i].Id) {
-			err := client.ForceDeleteInstanceExecute(ctx, testutil.ProjectId, testutil.Region, *items[i].Id)
+			// TODO @mhenselin - does force still exist?
+			// err := client.ForceDeleteInstanceExecute(ctx, testutil.ProjectId, testutil.Region, *items[i].Id)
+			err := client.DeleteInstanceRequestExecute(ctx, testutil.ProjectId, testutil.Region, *items[i].Id)
 			if err != nil {
 				return fmt.Errorf("deleting instance %s during CheckDestroy: %w", *items[i].Id, err)
 			}

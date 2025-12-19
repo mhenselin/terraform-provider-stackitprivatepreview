@@ -1,5 +1,3 @@
-// Copyright (c) STACKIT
-
 package testutil
 
 import (
@@ -15,7 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/config"
 	"github.com/hashicorp/terraform-plugin-testing/echoprovider"
 
-	"github.com/stackitcloud/terraform-provider-stackit/stackit"
+	"github.com/mhenselin/terraform-provider-stackitprivatepreview/stackit"
 )
 
 const (

@@ -1,5 +1,3 @@
-// Copyright (c) STACKIT
-
 package stackit
 
 import (
@@ -16,13 +14,15 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/mhenselin/terraform-provider-stackitprivatepreview/stackit/internal/core"
+	"github.com/mhenselin/terraform-provider-stackitprivatepreview/stackit/internal/features"
 	sdkauth "github.com/stackitcloud/stackit-sdk-go/core/auth"
 	"github.com/stackitcloud/stackit-sdk-go/core/config"
-	"github.com/stackitcloud/terraform-provider-stackit/stackit/internal/core"
-	"github.com/stackitcloud/terraform-provider-stackit/stackit/internal/features"
-	postgresFlexAlphaInstance "github.com/stackitcloud/terraform-provider-stackit/stackit/internal/services/postgresflexalpha/instance"
-	sqlServerFlexAlphaInstance "github.com/stackitcloud/terraform-provider-stackit/stackit/internal/services/sqlserverflexalpha/instance"
-	sqlServerFlexAlpaUser "github.com/stackitcloud/terraform-provider-stackit/stackit/internal/services/sqlserverflexalpha/user"
+
+	postgresFlexAlphaInstance "github.com/mhenselin/terraform-provider-stackitprivatepreview/stackit/internal/services/postgresflexalpha/instance"
+	postgresFlexAlphaUser "github.com/mhenselin/terraform-provider-stackitprivatepreview/stackit/internal/services/postgresflexalpha/user"
+	sqlServerFlexAlphaInstance "github.com/mhenselin/terraform-provider-stackitprivatepreview/stackit/internal/services/sqlserverflexalpha/instance"
+	sqlserverFlexAlphaUser "github.com/mhenselin/terraform-provider-stackitprivatepreview/stackit/internal/services/sqlserverflexalpha/user"
 )
 
 // Ensure the implementation satisfies the expected interfaces
@@ -359,9 +359,7 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 
 	setStringField(providerConfig.DefaultRegion, func(v string) { providerData.DefaultRegion = v })
 	setStringField(
-		providerConfig.Region,
-		func(v string) { providerData.Region = v },
-	) // nolint:staticcheck // preliminary handling of deprecated attribute
+		providerConfig.Region, func(v string) { providerData.Region = v }) // nolint:staticcheck // preliminary handling of deprecated attribute
 	setBoolField(providerConfig.EnableBetaResources, func(v bool) { providerData.EnableBetaResources = v })
 
 	setStringField(
@@ -486,8 +484,11 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 // DataSources defines the data sources implemented in the provider.
 func (p *Provider) DataSources(_ context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
+		// TODO @mhenselin
+		// postgresFlexAlphaInstance.NewInstanceDataSource(),
+		postgresFlexAlphaUser.NewUserDataSource,
 		sqlServerFlexAlphaInstance.NewInstanceDataSource,
-		sqlServerFlexAlpaUser.NewUserDataSource,
+		sqlserverFlexAlphaUser.NewUserDataSource,
 	}
 }
 
@@ -495,8 +496,9 @@ func (p *Provider) DataSources(_ context.Context) []func() datasource.DataSource
 func (p *Provider) Resources(_ context.Context) []func() resource.Resource {
 	resources := []func() resource.Resource{
 		postgresFlexAlphaInstance.NewInstanceResource,
+		postgresFlexAlphaUser.NewUserResource,
 		sqlServerFlexAlphaInstance.NewInstanceResource,
-		sqlServerFlexAlpaUser.NewUserResource,
+		sqlserverFlexAlphaUser.NewUserResource,
 	}
 	return resources
 }

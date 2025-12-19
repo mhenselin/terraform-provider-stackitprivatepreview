@@ -1,5 +1,3 @@
-// Copyright (c) STACKIT
-
 package conversion
 
 import (
@@ -11,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	"github.com/stackitcloud/terraform-provider-stackit/stackit/internal/core"
+	"github.com/mhenselin/terraform-provider-stackitprivatepreview/stackit/internal/core"
 )
 
 func ToString(ctx context.Context, v attr.Value) (string, error) {
@@ -86,6 +84,16 @@ func StringValueToPointer(s basetypes.StringValue) *string {
 		return nil
 	}
 	value := s.ValueString()
+	return &value
+}
+
+// Int32ValueToPointer converts basetypes.Int64Value to a pointer to int64.
+// It returns nil if the value is null or unknown.
+func Int32ValueToPointer(s basetypes.Int32Value) *int32 {
+	if s.IsNull() || s.IsUnknown() {
+		return nil
+	}
+	value := s.ValueInt32()
 	return &value
 }
 

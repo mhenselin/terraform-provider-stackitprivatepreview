@@ -8,10 +8,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	sqlserverflex "github.com/stackitcloud/terraform-provider-stackit/pkg/sqlserverflexalpha"
-	"github.com/stackitcloud/terraform-provider-stackit/stackit/internal/conversion"
-	"github.com/stackitcloud/terraform-provider-stackit/stackit/internal/core"
-	"github.com/stackitcloud/terraform-provider-stackit/stackit/internal/utils"
+	sqlserverflex "github.com/mhenselin/terraform-provider-stackitprivatepreview/pkg/sqlserverflexalpha"
+	"github.com/mhenselin/terraform-provider-stackitprivatepreview/stackit/internal/conversion"
+	"github.com/mhenselin/terraform-provider-stackitprivatepreview/stackit/internal/core"
+	"github.com/mhenselin/terraform-provider-stackitprivatepreview/stackit/internal/utils"
 )
 
 type sqlserverflexClient interface {
@@ -216,7 +216,7 @@ func toCreatePayload(model *Model, storage *storageModel, encryption *encryption
 	var aclElements []string
 	if network != nil && !(network.ACL.IsNull() || network.ACL.IsUnknown()) {
 		aclElements = make([]string, 0, len(network.ACL.Elements()))
-		diags := network.ACL.ElementsAs(nil, &aclElements, false)
+		diags := network.ACL.ElementsAs(context.TODO(), &aclElements, false)
 		if diags.HasError() {
 			return nil, fmt.Errorf("creating network: %w", core.DiagsToError(diags))
 		}
@@ -259,7 +259,7 @@ func toUpdatePayload(model *Model, storage *storageModel, network *networkModel)
 	var aclElements []string
 	if network != nil && !(network.ACL.IsNull() || network.ACL.IsUnknown()) {
 		aclElements = make([]string, 0, len(network.ACL.Elements()))
-		diags := network.ACL.ElementsAs(nil, &aclElements, false)
+		diags := network.ACL.ElementsAs(context.TODO(), &aclElements, false)
 		if diags.HasError() {
 			return nil, fmt.Errorf("creating network: %w", core.DiagsToError(diags))
 		}
@@ -349,7 +349,7 @@ func loadFlavorId(ctx context.Context, client sqlserverflexClient, model *Model,
 		if f.Id == nil || f.Cpu == nil || f.Memory == nil {
 			continue
 		}
-		if strings.ToLower(*f.NodeType) != strings.ToLower(*nodeType) {
+		if !strings.EqualFold(*f.NodeType, *nodeType) {
 			continue
 		}
 		if *f.Cpu == *cpu && *f.Memory == *ram {

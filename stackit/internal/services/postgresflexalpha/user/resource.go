@@ -7,18 +7,19 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/stackitcloud/terraform-provider-stackit/pkg/postgresflexalpha"
-	"github.com/stackitcloud/terraform-provider-stackit/pkg/postgresflexalpha/wait"
-	postgresflexalphaUtils "github.com/stackitcloud/terraform-provider-stackit/stackit/internal/services/postgresflexalpha/utils"
+	"github.com/mhenselin/terraform-provider-stackitprivatepreview/pkg/postgresflexalpha/wait"
+	postgresflexUtils "github.com/mhenselin/terraform-provider-stackitprivatepreview/stackit/internal/services/postgresflexalpha/utils"
+
+	postgresflex "github.com/mhenselin/terraform-provider-stackitprivatepreview/pkg/postgresflexalpha"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/stackitcloud/terraform-provider-stackit/stackit/internal/conversion"
-	"github.com/stackitcloud/terraform-provider-stackit/stackit/internal/core"
-	"github.com/stackitcloud/terraform-provider-stackit/stackit/internal/utils"
-	"github.com/stackitcloud/terraform-provider-stackit/stackit/internal/validate"
+	"github.com/mhenselin/terraform-provider-stackitprivatepreview/stackit/internal/conversion"
+	"github.com/mhenselin/terraform-provider-stackitprivatepreview/stackit/internal/core"
+	"github.com/mhenselin/terraform-provider-stackitprivatepreview/stackit/internal/utils"
+	"github.com/mhenselin/terraform-provider-stackitprivatepreview/stackit/internal/validate"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -540,8 +541,8 @@ func (r *userResource) ImportState(
 }
 
 func mapFieldsCreate(
-	userResp *postgresflexalpha.CreateUserResponse,
-	rolesArg *[]postgresflexalpha.UserRole,
+	userResp *postgresflex.CreateUserResponse,
+	rolesArg *[]postgresflex.UserRole,
 	model *Model,
 	region string,
 ) error {
@@ -589,7 +590,7 @@ func mapFieldsCreate(
 	return nil
 }
 
-func mapFields(userResp *postgresflexalpha.GetUserResponse, model *Model, region string) error {
+func mapFields(userResp *postgresflex.GetUserResponse, model *Model, region string) error {
 	if userResp == nil {
 		return fmt.Errorf("response is nil")
 	}
@@ -633,7 +634,7 @@ func mapFields(userResp *postgresflexalpha.GetUserResponse, model *Model, region
 	return nil
 }
 
-func toCreatePayload(model *Model, roles *[]string) (*postgresflexalpha.CreateUserRequestPayload, error) {
+func toCreatePayload(model *Model, roles *[]string) (*postgresflex.CreateUserRequestPayload, error) {
 	if model == nil {
 		return nil, fmt.Errorf("nil model")
 	}
@@ -641,22 +642,22 @@ func toCreatePayload(model *Model, roles *[]string) (*postgresflexalpha.CreateUs
 		return nil, fmt.Errorf("nil roles")
 	}
 
-	return &postgresflexalpha.CreateUserRequestPayload{
+	return &postgresflex.CreateUserRequestPayload{
 		Roles: toPayloadRoles(roles),
 		Name:  conversion.StringValueToPointer(model.Username),
 	}, nil
 }
 
-func toPayloadRoles(roles *[]string) *[]postgresflexalpha.UserRole {
-	var userRoles = make([]postgresflexalpha.UserRole, 0, len(*roles))
+func toPayloadRoles(roles *[]string) *[]postgresflex.UserRole {
+	var userRoles = make([]postgresflex.UserRole, 0, len(*roles))
 	for _, role := range *roles {
-		userRoles = append(userRoles, postgresflexalpha.UserRole(role))
+		userRoles = append(userRoles, postgresflex.UserRole(role))
 	}
 	return &userRoles
 }
 
 func toUpdatePayload(model *Model, roles *[]string) (
-	*postgresflexalpha.UpdateUserRequestPayload,
+	*postgresflex.UpdateUserRequestPayload,
 	error,
 ) {
 	if model == nil {
@@ -666,7 +667,7 @@ func toUpdatePayload(model *Model, roles *[]string) (
 		return nil, fmt.Errorf("nil roles")
 	}
 
-	return &postgresflexalpha.UpdateUserRequestPayload{
+	return &postgresflex.UpdateUserRequestPayload{
 		Roles: toPayloadRoles(roles),
 	}, nil
 }
