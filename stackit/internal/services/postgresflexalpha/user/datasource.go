@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/mhenselin/terraform-provider-stackitprivatepreview/stackit/internal/conversion"
-	postgresflexUtils "github.com/mhenselin/terraform-provider-stackitprivatepreview/stackit/internal/services/postgresflex/utils"
+	postgresflexUtils "github.com/mhenselin/terraform-provider-stackitprivatepreview/stackit/internal/services/postgresflexalpha/utils"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
