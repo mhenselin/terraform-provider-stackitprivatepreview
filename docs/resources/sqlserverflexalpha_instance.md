@@ -71,7 +71,7 @@ Required:
 
 - `key_id` (String) STACKIT KMS - Key ID of the encryption key to use.
 - `key_version` (String) STACKIT KMS - Key version to use in the encryption key.
-- `keyring_id` (String)
+- `keyring_id` (String) STACKIT KMS - KeyRing ID of the encryption key to use.
 - `service_account` (String)
 
 

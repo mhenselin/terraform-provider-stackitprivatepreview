@@ -68,8 +68,8 @@ import {
 Required:
 
 - `key_id` (String) Key ID of the encryption key.
-- `keyring_id` (String)
 - `key_version` (String)
+- `keyring_id` (String)
 - `service_account` (String)
 
 
