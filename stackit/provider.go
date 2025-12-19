@@ -1,5 +1,3 @@
-// Copyright (c) STACKIT
-
 package stackit
 
 import (
@@ -16,13 +14,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/mhenselin/terraform-provider-stackitprivatepreview/stackit/internal/core"
+	"github.com/mhenselin/terraform-provider-stackitprivatepreview/stackit/internal/features"
 	sdkauth "github.com/stackitcloud/stackit-sdk-go/core/auth"
 	"github.com/stackitcloud/stackit-sdk-go/core/config"
-	"github.com/stackitcloud/terraform-provider-stackit/stackit/internal/core"
-	"github.com/stackitcloud/terraform-provider-stackit/stackit/internal/features"
-	postgresFlexAlphaInstance "github.com/stackitcloud/terraform-provider-stackit/stackit/internal/services/postgresflexalpha/instance"
-	sqlServerFlexAlphaInstance "github.com/stackitcloud/terraform-provider-stackit/stackit/internal/services/sqlserverflexalpha/instance"
-	sqlserverFlexAlphaUser "github.com/stackitcloud/terraform-provider-stackit/stackit/internal/services/sqlserverflexalpha/user"
+
+	postgresFlexAlphaInstance "github.com/mhenselin/terraform-provider-stackitprivatepreview/stackit/internal/services/postgresflexalpha/instance"
+	sqlServerFlexAlphaInstance "github.com/mhenselin/terraform-provider-stackitprivatepreview/stackit/internal/services/sqlserverflexalpha/instance"
+	sqlserverFlexAlphaUser "github.com/mhenselin/terraform-provider-stackitprivatepreview/stackit/internal/services/sqlserverflexalpha/user"
 )
 
 // Ensure the implementation satisfies the expected interfaces

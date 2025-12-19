@@ -1,5 +1,3 @@
-// Copyright (c) STACKIT
-
 package postgresflexa
 
 import (
@@ -8,16 +6,16 @@ import (
 	"net/http"
 	"strings"
 
-	postgresflexUtils "github.com/stackitcloud/terraform-provider-stackit/stackit/internal/services/postgresflex/utils"
+	postgresflexUtils "github.com/mhenselin/terraform-provider-stackitprivatepreview/stackit/internal/services/postgresflex/utils"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/stackitcloud/terraform-provider-stackit/stackit/internal/conversion"
-	"github.com/stackitcloud/terraform-provider-stackit/stackit/internal/core"
-	"github.com/stackitcloud/terraform-provider-stackit/stackit/internal/utils"
-	"github.com/stackitcloud/terraform-provider-stackit/stackit/internal/validate"
+	"github.com/mhenselin/terraform-provider-stackitprivatepreview/stackit/internal/conversion"
+	"github.com/mhenselin/terraform-provider-stackitprivatepreview/stackit/internal/core"
+	"github.com/mhenselin/terraform-provider-stackitprivatepreview/stackit/internal/utils"
+	"github.com/mhenselin/terraform-provider-stackitprivatepreview/stackit/internal/validate"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
