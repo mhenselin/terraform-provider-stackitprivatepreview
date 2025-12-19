@@ -8,7 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mhenselin/terraform-provider-stackitprivatepreview/pkg/postgresflexalpha"
+	//postgresflex "github.com/mhenselin/terraform-provider-stackitprivatepreview/pkg/postgresflexalpha"
+	postgresflex "github.com/mhenselin/terraform-provider-stackitprivatepreview/pkg/postgresflexalpha"
 	"github.com/mhenselin/terraform-provider-stackitprivatepreview/pkg/postgresflexalpha/wait"
 	postgresflexUtils "github.com/mhenselin/terraform-provider-stackitprivatepreview/stackit/internal/services/postgresflexalpha/utils"
 
@@ -113,7 +114,7 @@ func NewInstanceResource() resource.Resource {
 
 // instanceResource is the resource implementation.
 type instanceResource struct {
-	client       *postgresflexalpha.APIClient
+	client       *postgresflex.APIClient
 	providerData core.ProviderData
 }
 
@@ -180,6 +181,7 @@ func (r *instanceResource) Schema(_ context.Context, req resource.SchemaRequest,
 		"region":      "The resource region. If not defined, the provider region is used.",
 		"encryption":  "The encryption block.",
 		"key_id":      "Key ID of the encryption key.",
+		// TODO @mhenselin - do the rest
 	}
 
 	resp.Schema = schema.Schema{
@@ -309,8 +311,8 @@ func (r *instanceResource) Schema(_ context.Context, req resource.SchemaRequest,
 							validate.NoSeparator(),
 						},
 					},
-					"key_ring_id": schema.StringAttribute{
-						Description: descriptions["key_ring_id"],
+					"keyring_id": schema.StringAttribute{
+						Description: descriptions["keyring_id"],
 						Required:    true,
 						PlanModifiers: []planmodifier.String{
 							stringplanmodifier.RequiresReplace(),
@@ -674,7 +676,7 @@ func (r *instanceResource) ImportState(ctx context.Context, req resource.ImportS
 	tflog.Info(ctx, "Postgres Flex instance state imported")
 }
 
-func mapFields(ctx context.Context, resp *postgresflexalpha.GetInstanceResponse, model *Model, flavor *flavorModel, storage *storageModel, region string) error {
+func mapFields(ctx context.Context, resp *postgresflex.GetInstanceResponse, model *Model, flavor *flavorModel, storage *storageModel, region string) error {
 	if resp == nil {
 		return fmt.Errorf("response input is nil")
 	}
@@ -766,7 +768,7 @@ func mapFields(ctx context.Context, resp *postgresflexalpha.GetInstanceResponse,
 	return nil
 }
 
-func toCreatePayload(model *Model, acl []string, flavor *flavorModel, storage *storageModel, enc *encryptionModel, net *networkModel) (*postgresflexalpha.CreateInstanceRequestPayload, error) {
+func toCreatePayload(model *Model, acl []string, flavor *flavorModel, storage *storageModel, enc *encryptionModel, net *networkModel) (*postgresflex.CreateInstanceRequestPayload, error) {
 	if model == nil {
 		return nil, fmt.Errorf("nil model")
 	}
@@ -781,7 +783,7 @@ func toCreatePayload(model *Model, acl []string, flavor *flavorModel, storage *s
 	}
 
 	replVal := int32(model.Replicas.ValueInt64())
-	return &postgresflexalpha.CreateInstanceRequestPayload{
+	return &postgresflex.CreateInstanceRequestPayload{
 		// TODO - verify working
 		Acl: &[]string{
 			strings.Join(acl, ","),
@@ -790,31 +792,31 @@ func toCreatePayload(model *Model, acl []string, flavor *flavorModel, storage *s
 		FlavorId:       conversion.StringValueToPointer(flavor.Id),
 		Name:           conversion.StringValueToPointer(model.Name),
 		// TODO - verify working
-		Replicas: postgresflexalpha.CreateInstanceRequestPayloadGetReplicasAttributeType(&replVal),
+		Replicas: postgresflex.CreateInstanceRequestPayloadGetReplicasAttributeType(&replVal),
 		// TODO - verify working
-		Storage: postgresflexalpha.CreateInstanceRequestPayloadGetStorageAttributeType(&postgresflexalpha.Storage{
+		Storage: postgresflex.CreateInstanceRequestPayloadGetStorageAttributeType(&postgresflex.Storage{
 			PerformanceClass: conversion.StringValueToPointer(storage.Class),
 			Size:             conversion.Int64ValueToPointer(storage.Size),
 		}),
 		Version: conversion.StringValueToPointer(model.Version),
 		// TODO - verify working
-		Encryption: postgresflexalpha.CreateInstanceRequestPayloadGetEncryptionAttributeType(
-			&postgresflexalpha.InstanceEncryption{
+		Encryption: postgresflex.CreateInstanceRequestPayloadGetEncryptionAttributeType(
+			&postgresflex.InstanceEncryption{
 				KekKeyId:       conversion.StringValueToPointer(enc.KeyId), // model.Encryption.Attributes(),
 				KekKeyRingId:   conversion.StringValueToPointer(enc.KeyRingId),
 				KekKeyVersion:  conversion.StringValueToPointer(enc.KeyVersion),
 				ServiceAccount: conversion.StringValueToPointer(enc.ServiceAccount),
 			},
 		),
-		Network: &postgresflexalpha.InstanceNetwork{
-			AccessScope: postgresflexalpha.InstanceNetworkGetAccessScopeAttributeType(
+		Network: &postgresflex.InstanceNetwork{
+			AccessScope: postgresflex.InstanceNetworkGetAccessScopeAttributeType(
 				conversion.StringValueToPointer(net.AccessScope),
 			),
 		},
 	}, nil
 }
 
-func toUpdatePayload(model *Model, acl []string, flavor *flavorModel, storage *storageModel) (*postgresflexalpha.UpdateInstancePartiallyRequestPayload, error) {
+func toUpdatePayload(model *Model, acl []string, flavor *flavorModel, storage *storageModel) (*postgresflex.UpdateInstancePartiallyRequestPayload, error) {
 	if model == nil {
 		return nil, fmt.Errorf("nil model")
 	}
@@ -828,7 +830,7 @@ func toUpdatePayload(model *Model, acl []string, flavor *flavorModel, storage *s
 		return nil, fmt.Errorf("nil storage")
 	}
 
-	return &postgresflexalpha.UpdateInstancePartiallyRequestPayload{
+	return &postgresflex.UpdateInstancePartiallyRequestPayload{
 		//Acl: postgresflexalpha.UpdateInstancePartiallyRequestPayloadGetAclAttributeType{
 		//	Items: &acl,
 		//},
@@ -836,7 +838,7 @@ func toUpdatePayload(model *Model, acl []string, flavor *flavorModel, storage *s
 		FlavorId:       conversion.StringValueToPointer(flavor.Id),
 		Name:           conversion.StringValueToPointer(model.Name),
 		//Replicas:       conversion.Int64ValueToPointer(model.Replicas),
-		Storage: &postgresflexalpha.StorageUpdate{
+		Storage: &postgresflex.StorageUpdate{
 			Size: conversion.Int64ValueToPointer(storage.Size),
 		},
 		Version: conversion.StringValueToPointer(model.Version),
@@ -844,7 +846,7 @@ func toUpdatePayload(model *Model, acl []string, flavor *flavorModel, storage *s
 }
 
 type postgresflexClient interface {
-	GetFlavorsRequestExecute(ctx context.Context, projectId string, region string) (*postgresflexalpha.GetFlavorsResponse, error)
+	GetFlavorsRequestExecute(ctx context.Context, projectId string, region string) (*postgresflex.GetFlavorsResponse, error)
 }
 
 func loadFlavorId(ctx context.Context, client postgresflexClient, model *Model, flavor *flavorModel) error {

@@ -12,8 +12,6 @@ description: |-
 ## Example Usage
 
 ```terraform
-# Copyright (c) STACKIT
-
 provider "stackitprivatepreview" {
   default_region = "eu01"
 }

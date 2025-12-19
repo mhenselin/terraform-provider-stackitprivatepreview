@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# Copyright (c) STACKIT
-
 
 # This script is used to manage the project, only used for installing the required tools for now
 # Usage: ./project.sh [action]

@@ -13,8 +13,6 @@ Postgres Flex instance resource schema. Must have a `region` specified in the pr
 ## Example Usage
 
 ```terraform
-# Copyright (c) STACKIT
-
 resource "stackitprivatepreview_postgresflexalpha_instance" "example" {
   project_id      = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
   name            = "example-instance"
