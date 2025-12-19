@@ -35,7 +35,7 @@
 #   version = 14
 #   encryption = {
 #     key_id = stackitalpha_kms_key.key.id
-#     key_ring_id = stackitalpha_kms_keyring.keyring.keyring_id
+#     keyring_id = stackitalpha_kms_keyring.keyring.keyring_id
 #     key_version = "1"
 #     service_account = var.sa_email
 #   }
