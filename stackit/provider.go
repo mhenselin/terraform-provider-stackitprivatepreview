@@ -485,6 +485,8 @@ func (p *Provider) Configure(ctx context.Context, req provider.ConfigureRequest,
 // DataSources defines the data sources implemented in the provider.
 func (p *Provider) DataSources(_ context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
+		//postgresFlexAlphaInstance.NewInstanceDataSource(),
+		postgresFlexAlphaUser.NewUserDataSource,
 		sqlServerFlexAlphaInstance.NewInstanceDataSource,
 		sqlserverFlexAlphaUser.NewUserDataSource,
 	}
@@ -494,6 +496,7 @@ func (p *Provider) DataSources(_ context.Context) []func() datasource.DataSource
 func (p *Provider) Resources(_ context.Context) []func() resource.Resource {
 	resources := []func() resource.Resource{
 		postgresFlexAlphaInstance.NewInstanceResource,
+		postgresFlexAlphaUser.NewUserResource,
 		sqlServerFlexAlphaInstance.NewInstanceResource,
 		sqlserverFlexAlphaUser.NewUserResource,
 	}
