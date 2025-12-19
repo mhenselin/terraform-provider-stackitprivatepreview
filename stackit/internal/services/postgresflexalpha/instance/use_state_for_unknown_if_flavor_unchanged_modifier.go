@@ -1,4 +1,6 @@
-package postgresflexa
+// Copyright (c) STACKIT
+
+package postgresflex
 
 import (
 	"context"

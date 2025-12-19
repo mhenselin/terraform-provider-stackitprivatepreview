@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Copyright (c) STACKIT
+
 
 # ./tofu.sh apply > >(tee -a stdout.log) 2> >(tee -a stderr.log >&2)
 
