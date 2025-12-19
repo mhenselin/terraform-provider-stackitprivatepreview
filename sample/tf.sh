@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+
 # ./tf.sh apply > >(tee -a stdout.log) 2> >(tee -a stderr.log >&2)
 
 # copy or rename sample.tfrc.example and adjust it
