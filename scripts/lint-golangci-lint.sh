@@ -14,5 +14,5 @@ else
     exit 1
 fi
 
-cd ${ROOT_DIR}
-golangci-lint run ${GOLANG_CI_ARGS}
+cd "${ROOT_DIR}"
+golangci-lint run "${GOLANG_CI_ARGS}"
