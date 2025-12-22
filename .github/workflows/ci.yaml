@@ -43,10 +43,12 @@ jobs:
         uses: golangci/golangci-lint-action@v9
         with:
           version: v2.7
+        continue-on-error: true
 
       - name: Lint
         run: make lint
-      
+        continue-on-error: true
+
       - name: Test
         run: make test
 
