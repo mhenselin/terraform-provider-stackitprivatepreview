@@ -34,21 +34,13 @@ var (
 )
 
 type Model struct {
-	Id         types.String    `tfsdk:"id"` // needed by TF
-	DatabaseId types.Int64     `tfsdk:"database_id"`
-	InstanceId types.String    `tfsdk:"instance_id"`
-	ProjectId  types.String    `tfsdk:"project_id"`
-	Name       types.String    `tfsdk:"name"`
-	Owner      types.String    `tfsdk:"owner"`
-	Region     types.String    `tfsdk:"region"`
-	Encryption encryptionModel `tfsdk:"encryption"`
-}
-
-type encryptionModel struct {
-	KeyId types.String `tfsdk:"key_id"`
-	//keyringid = xxxx
-	//keyversion = xxxx
-	//serviceaccount = xxxx
+	Id         types.String `tfsdk:"id"` // needed by TF
+	DatabaseId types.Int64  `tfsdk:"database_id"`
+	InstanceId types.String `tfsdk:"instance_id"`
+	ProjectId  types.String `tfsdk:"project_id"`
+	Name       types.String `tfsdk:"name"`
+	Owner      types.String `tfsdk:"owner"`
+	Region     types.String `tfsdk:"region"`
 }
 
 // NewDatabaseResource is a helper function to simplify the provider implementation.
@@ -490,11 +482,8 @@ func toCreatePayload(model *Model) (*postgresflexalpha.CreateDatabaseRequestPayl
 	}
 
 	return &postgresflexalpha.CreateDatabaseRequestPayload{
-		Name: model.Name.ValueStringPointer(),
-		// TODO
-		//Options: &map[string]string{
-		//	"owner": model.Owner.ValueString(),
-		//},
+		Name:  model.Name.ValueStringPointer(),
+		Owner: model.Owner.ValueStringPointer(),
 	}, nil
 }
 
