@@ -13,7 +13,7 @@
 #   purpose      = "symmetric_encrypt_decrypt"
 #   access_scope = "SNA"
 # }
-#
+
 # output "keyid" {
 #   value = stackit_kms_key.key.key_id
 # }
