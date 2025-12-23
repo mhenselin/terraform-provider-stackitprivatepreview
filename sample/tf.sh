@@ -13,7 +13,10 @@ parsed_options=$(
 eval "set -- $parsed_options"
 while [ "$#" -gt 0 ]; do
   case $1 in
-    (-l) TF_LOG=TRACE
+    (-l) TF_LOG=DEBUG
+         export TF_LOG
+         shift;;
+    (-ll) TF_LOG=TRACE
          export TF_LOG
          shift;;
     (--) shift; break;;

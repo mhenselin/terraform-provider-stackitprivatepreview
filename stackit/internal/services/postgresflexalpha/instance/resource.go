@@ -57,6 +57,7 @@ type Model struct {
 	BackupSchedule types.String `tfsdk:"backup_schedule"`
 	Flavor         types.Object `tfsdk:"flavor"`
 	Replicas       types.Int64  `tfsdk:"replicas"`
+	RetentionDays  types.Int64  `tfsdk:"retention_days"`
 	Storage        types.Object `tfsdk:"storage"`
 	Version        types.String `tfsdk:"version"`
 	Region         types.String `tfsdk:"region"`
@@ -322,6 +323,12 @@ func (r *instanceResource) Schema(_ context.Context, req resource.SchemaRequest,
 			},
 			"replicas": schema.Int64Attribute{
 				Required: true,
+			},
+			"retention_days": schema.Int64Attribute{
+				Required: true,
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.UseStateForUnknown(),
+				},
 			},
 			"storage": schema.SingleNestedAttribute{
 				Required: true,

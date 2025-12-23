@@ -45,11 +45,25 @@ func TestMapFields(t *testing.T) {
 				InstanceId: types.StringValue("iid"),
 				ProjectId:  types.StringValue("pid"),
 			},
-			&postgresflex.GetInstanceResponse{},
-			&flavorModel{},
+			&postgresflex.GetInstanceResponse{
+				FlavorId: utils.Ptr("iid"),
+			},
+			&flavorModel{
+				Id: types.StringValue("iid"),
+			},
 			&storageModel{},
-			&encryptionModel{},
-			&networkModel{},
+			&encryptionModel{
+				KeyRingId:      types.StringNull(),
+				KeyId:          types.StringNull(),
+				KeyVersion:     types.StringNull(),
+				ServiceAccount: types.StringNull(),
+			},
+			&networkModel{
+				ACL:             types.ListNull(types.StringType),
+				AccessScope:     types.StringNull(),
+				InstanceAddress: types.StringNull(),
+				RouterAddress:   types.StringNull(),
+			},
 			testRegion,
 			Model{
 				Id:             types.StringValue("pid,region,iid"),
@@ -58,7 +72,7 @@ func TestMapFields(t *testing.T) {
 				Name:           types.StringNull(),
 				BackupSchedule: types.StringNull(),
 				Flavor: types.ObjectValueMust(flavorTypes, map[string]attr.Value{
-					"id":          types.StringNull(),
+					"id":          types.StringValue("iid"),
 					"description": types.StringNull(),
 					"cpu":         types.Int64Null(),
 					"ram":         types.Int64Null(),
@@ -71,6 +85,18 @@ func TestMapFields(t *testing.T) {
 				}),
 				Version: types.StringNull(),
 				Region:  types.StringValue(testRegion),
+				Encryption: types.ObjectValueMust(encryptionTypes, map[string]attr.Value{
+					"keyring_id":      types.StringNull(),
+					"key_id":          types.StringNull(),
+					"key_version":     types.StringNull(),
+					"service_account": types.StringNull(),
+				}),
+				Network: types.ObjectValueMust(encryptionTypes, map[string]attr.Value{
+					"acl":              types.ListNull(types.StringType),
+					"access_scope":     types.StringNull(),
+					"instance_address": types.StringNull(),
+					"router_address":   types.StringNull(),
+				}),
 			},
 			true,
 		},
@@ -165,6 +191,7 @@ func TestMapFields(t *testing.T) {
 					"description": types.StringNull(),
 					"cpu":         types.Int64Value(12),
 					"ram":         types.Int64Value(34),
+					"node_type":   types.StringValue("node_type"),
 				}),
 				Replicas: types.Int64Value(56),
 				Storage: types.ObjectValueMust(storageTypes, map[string]attr.Value{
@@ -229,6 +256,7 @@ func TestMapFields(t *testing.T) {
 					"description": types.StringNull(),
 					"cpu":         types.Int64Value(12),
 					"ram":         types.Int64Value(34),
+					"node_type":   types.StringValue("node_type"),
 				}),
 				Replicas: types.Int64Value(56),
 				Storage: types.ObjectValueMust(storageTypes, map[string]attr.Value{
@@ -281,7 +309,7 @@ func TestMapFields(t *testing.T) {
 				t.Fatalf("Should not have failed: %v", err)
 			}
 			if tt.isValid {
-				diff := cmp.Diff(tt.state, tt.expected)
+				diff := cmp.Diff(tt.expected, tt.state)
 				if diff != "" {
 					t.Fatalf("Data does not match: %s", diff)
 				}
