@@ -290,6 +290,9 @@ func loadFlavorId(ctx context.Context, client postgresflexClient, model *Model, 
 		}
 		if *f.Cpu == *cpu && *f.Memory == *ram {
 			var useSc *postgresflex.FlavorStorageClassesStorageClass
+			if f.StorageClasses == nil {
+				continue
+			}
 			for _, sc := range *f.StorageClasses {
 				if *sc.Class != *storageClass {
 					continue
@@ -328,7 +331,7 @@ func getAllFlavors(ctx context.Context, client postgresflexClient, projectId, re
 	var flavorList []postgresflex.ListFlavors
 
 	page := int64(1)
-	size := int64(10)
+	size := int64(100)
 	for {
 		sort := postgresflex.FLAVORSORT_INDEX_ASC
 		res, err := client.GetFlavorsRequestExecute(ctx, projectId, region, &page, &size, &sort)
@@ -341,7 +344,11 @@ func getAllFlavors(ctx context.Context, client postgresflexClient, projectId, re
 		pagination := res.GetPagination()
 		flavorList = append(flavorList, *res.Flavors...)
 
-		if *pagination.TotalRows == int64(len(flavorList)) {
+		if pagination.TotalRows == nil || *pagination.TotalRows <= int64(len(flavorList)) {
+			break
+		}
+
+		if pagination.TotalPages == nil || pagination.Page == nil || *pagination.Page >= *pagination.TotalPages {
 			break
 		}
 		page++

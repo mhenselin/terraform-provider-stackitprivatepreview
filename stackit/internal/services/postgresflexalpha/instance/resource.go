@@ -8,6 +8,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	postgresflex "github.com/mhenselin/terraform-provider-stackitprivatepreview/pkg/postgresflexalpha"
 	"github.com/mhenselin/terraform-provider-stackitprivatepreview/pkg/postgresflexalpha/wait"
 	postgresflexUtils "github.com/mhenselin/terraform-provider-stackitprivatepreview/stackit/internal/services/postgresflexalpha/utils"
@@ -40,6 +43,11 @@ var (
 	_ resource.ResourceWithImportState = &instanceResource{}
 	_ resource.ResourceWithModifyPlan  = &instanceResource{}
 )
+
+var validNodeTypes []string = []string{
+	"Single",
+	"Replica",
+}
 
 type Model struct {
 	Id             types.String `tfsdk:"id"` // needed by TF
@@ -239,28 +247,76 @@ func (r *instanceResource) Schema(_ context.Context, req resource.SchemaRequest,
 			"backup_schedule": schema.StringAttribute{
 				Required: true,
 			},
+			// TODO - make it either flavor_id or ram, cpu and node_type
 			"flavor": schema.SingleNestedAttribute{
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifier.RequiresReplace(),
+					objectplanmodifier.UseStateForUnknown(),
+				},
 				Required: true,
 				Attributes: map[string]schema.Attribute{
 					"id": schema.StringAttribute{
-						Computed: true,
 						Optional: true,
+						Computed: true,
 						PlanModifiers: []planmodifier.String{
-							UseStateForUnknownIfFlavorUnchanged(req),
 							stringplanmodifier.RequiresReplace(),
+							stringplanmodifier.UseStateForUnknown(),
 						},
 					},
 					"description": schema.StringAttribute{
 						Computed: true,
 						PlanModifiers: []planmodifier.String{
-							UseStateForUnknownIfFlavorUnchanged(req),
+							stringplanmodifier.UseStateForUnknown(),
+						},
+					},
+					"node_type": schema.StringAttribute{
+						Required: true,
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.RequiresReplace(),
+							stringplanmodifier.UseStateForUnknown(),
+						},
+						Validators: []validator.String{
+							stringvalidator.ConflictsWith([]path.Expression{
+								path.MatchRelative().AtParent().AtName("id"),
+							}...),
+							stringvalidator.OneOfCaseInsensitive(validNodeTypes...),
+							stringvalidator.AlsoRequires([]path.Expression{
+								path.MatchRelative().AtParent().AtName("cpu"),
+								path.MatchRelative().AtParent().AtName("ram"),
+							}...),
 						},
 					},
 					"cpu": schema.Int64Attribute{
 						Required: true,
+						PlanModifiers: []planmodifier.Int64{
+							int64planmodifier.RequiresReplace(),
+							int64planmodifier.UseStateForUnknown(),
+						},
+						Validators: []validator.Int64{
+							int64validator.ConflictsWith([]path.Expression{
+								path.MatchRelative().AtParent().AtName("id"),
+							}...),
+							int64validator.AlsoRequires([]path.Expression{
+								path.MatchRelative().AtParent().AtName("node_type"),
+								path.MatchRelative().AtParent().AtName("ram"),
+							}...),
+						},
 					},
 					"ram": schema.Int64Attribute{
 						Required: true,
+						PlanModifiers: []planmodifier.Int64{
+							int64planmodifier.RequiresReplace(),
+							int64planmodifier.UseStateForUnknown(),
+						},
+						Validators: []validator.Int64{
+							int64validator.ConflictsWith([]path.Expression{
+								path.MatchRelative().AtParent().AtName("id"),
+							}...),
+							int64validator.AlsoRequires([]path.Expression{
+								path.MatchRelative().AtParent().AtName("node_type"),
+								path.MatchRelative().AtParent().AtName("cpu"),
+							}...),
+						},
 					},
 				},
 			},
