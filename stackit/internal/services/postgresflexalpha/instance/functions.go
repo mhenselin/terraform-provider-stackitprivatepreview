@@ -2,11 +2,13 @@ package postgresflexalpha
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"strings"
+	"os"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	postgresflex "github.com/mhenselin/terraform-provider-stackitprivatepreview/pkg/postgresflexalpha"
 	"github.com/mhenselin/terraform-provider-stackitprivatepreview/stackit/internal/conversion"
 	"github.com/mhenselin/terraform-provider-stackitprivatepreview/stackit/internal/core"
@@ -148,10 +150,13 @@ func mapFields(
 	model.Network = networkObject
 	model.BackupSchedule = types.StringPointerValue(instance.BackupSchedule)
 	model.Flavor = flavorObject
-	// TODO - verify working
-	model.Replicas = types.Int64Value(int64(*instance.Replicas))
+
+	if instance.Replicas != nil {
+		model.Replicas = types.Int64Value(int64(*instance.Replicas))
+	}
 	model.Storage = storageObject
 	model.Version = types.StringPointerValue(instance.Version)
+	model.RetentionDays = types.Int64PointerValue(instance.RetentionDays)
 	model.Region = types.StringValue(region)
 	model.Encryption = encryptionObject
 	model.Network = networkObject
@@ -184,6 +189,7 @@ func toCreatePayload(model *Model, flavor *flavorModel, storage *storageModel, e
 		encryptionPayload.ServiceAccount = conversion.StringValueToPointer(enc.ServiceAccount)
 	}
 
+	// TODO -
 	var aclElements []string
 	if net != nil && !(net.ACL.IsNull() || net.ACL.IsUnknown()) {
 		aclElements = make([]string, 0, len(net.ACL.Elements()))
@@ -205,12 +211,12 @@ func toCreatePayload(model *Model, flavor *flavorModel, storage *storageModel, e
 		BackupSchedule: conversion.StringValueToPointer(model.BackupSchedule),
 		FlavorId:       conversion.StringValueToPointer(flavor.Id),
 		Name:           conversion.StringValueToPointer(model.Name),
-		// TODO - verify working
-		Replicas:   postgresflex.CreateInstanceRequestPayloadGetReplicasAttributeType(&replVal),
-		Storage:    storagePayload,
-		Version:    conversion.StringValueToPointer(model.Version),
-		Encryption: encryptionPayload,
-		Network:    networkPayload,
+		Replicas:       postgresflex.CreateInstanceRequestPayloadGetReplicasAttributeType(&replVal),
+		RetentionDays:  conversion.Int64ValueToPointer(model.RetentionDays),
+		Storage:        storagePayload,
+		Version:        conversion.StringValueToPointer(model.Version),
+		Encryption:     encryptionPayload,
+		Network:        networkPayload,
 	}, nil
 }
 
@@ -281,15 +287,22 @@ func loadFlavorId(ctx context.Context, client postgresflexClient, model *Model, 
 
 	avl := ""
 	foundFlavorCount := 0
+	var foundFlavors []postgresflex.ListFlavors
 	for _, f := range flavorList {
 		if f.Id == nil || f.Cpu == nil || f.Memory == nil {
 			continue
 		}
-		if !strings.EqualFold(*f.NodeType, *nodeType) {
+		if *f.NodeType != *nodeType {
 			continue
 		}
+		//if !strings.EqualFold(*f.NodeType, *nodeType) {
+		//	continue
+		//}
 		if *f.Cpu == *cpu && *f.Memory == *ram {
 			var useSc *postgresflex.FlavorStorageClassesStorageClass
+			if f.StorageClasses == nil {
+				continue
+			}
 			for _, sc := range *f.StorageClasses {
 				if *sc.Class != *storageClass {
 					continue
@@ -306,14 +319,20 @@ func loadFlavorId(ctx context.Context, client postgresflexClient, model *Model, 
 			flavor.Id = types.StringValue(*f.Id)
 			flavor.Description = types.StringValue(*f.Description)
 			foundFlavorCount++
+			foundFlavors = append(foundFlavors, f)
+
+			fmt.Printf("\n\t\tfound flavor: c - %d, r - %d, n - %s", *f.Cpu, *f.Memory, *f.NodeType)
+			tflog.Debug(context.Background(), fmt.Sprintf("\n\t\tfound flavor: c - %d, r - %d, n - %s", *f.Cpu, *f.Memory, *f.NodeType))
 		}
 		for _, cls := range *f.StorageClasses {
 			avl = fmt.Sprintf("%s\n- %d CPU, %d GB RAM, storage %s (min: %d - max: %d)", avl, *f.Cpu, *f.Memory, *cls.Class, *f.MinGB, *f.MaxGB)
 		}
 	}
-	if foundFlavorCount > 1 {
-		return fmt.Errorf("multiple flavors found: %d flavors", foundFlavorCount)
-	}
+
+	//if foundFlavorCount > 1 {
+	//	tflog.Debug(context.TODO(), fmt.Sprintf("found flavor %+v", foundFlavors))
+	//	return fmt.Errorf("multiple flavors found: %d flavors", foundFlavorCount)
+	//}
 	if flavor.Id.ValueString() == "" {
 		return fmt.Errorf("couldn't find flavor, available specs are:%s", avl)
 	}
@@ -328,7 +347,7 @@ func getAllFlavors(ctx context.Context, client postgresflexClient, projectId, re
 	var flavorList []postgresflex.ListFlavors
 
 	page := int64(1)
-	size := int64(10)
+	size := int64(50)
 	for {
 		sort := postgresflex.FLAVORSORT_INDEX_ASC
 		res, err := client.GetFlavorsRequestExecute(ctx, projectId, region, &page, &size, &sort)
@@ -339,12 +358,37 @@ func getAllFlavors(ctx context.Context, client postgresflexClient, projectId, re
 			return nil, fmt.Errorf("finding flavors for project %s", projectId)
 		}
 		pagination := res.GetPagination()
-		flavorList = append(flavorList, *res.Flavors...)
 
-		if *pagination.TotalRows == int64(len(flavorList)) {
+		respRes, err := json.Marshal(*res.Flavors)
+		if err != nil {
+			return nil, fmt.Errorf("listing postgresflex flavors: %w", err)
+		}
+		err = os.WriteFile("flavors_response.json", respRes, 0777)
+		if err != nil {
+			return nil, fmt.Errorf("listing postgresflex flavors: %w", err)
+		}
+
+		for _, fl := range *res.Flavors {
+			flavorList = append(flavorList, fl)
+		}
+		// flavorList = append(flavorList, *res.Flavors...)
+
+		if pagination.TotalRows == nil || *pagination.TotalRows <= int64(len(flavorList)) {
+			break
+		}
+
+		if pagination.TotalPages == nil || pagination.Page == nil || *pagination.Page >= *pagination.TotalPages {
 			break
 		}
 		page++
+	}
+	res, err := json.Marshal(flavorList)
+	if err != nil {
+		return nil, fmt.Errorf("listing postgresflex flavors: %w", err)
+	}
+	err = os.WriteFile("flavors.json", res, 0777)
+	if err != nil {
+		return nil, fmt.Errorf("listing postgresflex flavors: %w", err)
 	}
 	return flavorList, nil
 }

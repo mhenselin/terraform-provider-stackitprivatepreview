@@ -531,6 +531,7 @@ func mapFields(userResp *sqlserverflexalpha.GetUserResponse, model *Model, regio
 		var roles []attr.Value
 		for _, role := range *user.Roles {
 			roles = append(roles, types.StringValue(string(role)))
+			tflog.Info(context.TODO(), fmt.Sprintf("user roles %+v", roles))
 		}
 		rolesSet, diags := types.SetValue(types.StringType, roles)
 		if diags.HasError() {

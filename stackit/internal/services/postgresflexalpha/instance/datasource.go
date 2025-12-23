@@ -129,6 +129,9 @@ func (r *instanceDataSource) Schema(ctx context.Context, _ datasource.SchemaRequ
 			"replicas": schema.Int64Attribute{
 				Computed: true,
 			},
+			"retention_days": schema.Int64Attribute{
+				Computed: true,
+			},
 			"storage": schema.SingleNestedAttribute{
 				Computed: true,
 				Attributes: map[string]schema.Attribute{
